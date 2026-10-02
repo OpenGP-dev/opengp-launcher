@@ -10,15 +10,20 @@
 #include <QtQmlIntegration>
 #include <atomic>
 #include <memory>
+#include <set>
 #include <thread>
+#include <vector>
 
+#include "core/dump_check.h"
 #include "core/home.h"
 #include "core/library.h"
 #include "core/prefs.h"
 #include "qt/game_list.h"
 
-class QQmlEngine;
+class QFile;
 class QJSEngine;
+class QProcess;
+class QQmlEngine;
 
 namespace launcher {
 
@@ -41,11 +46,17 @@ class Launcher : public QObject {
   Q_PROPERTY(double progress READ progress NOTIFY progressChanged)
   Q_PROPERTY(QStringList buildLog READ buildLog NOTIFY progressChanged)
   Q_PROPERTY(QString runningId READ runningId NOTIFY runningChanged)
+  Q_PROPERTY(QString verifyingId READ verifyingId NOTIFY verifyChanged)
+  Q_PROPERTY(double verifyProgress READ verifyProgress NOTIFY verifyChanged)
   Q_PROPERTY(int onLaunch READ onLaunch WRITE setOnLaunch NOTIFY prefsChanged)
 
  public:
   enum State { NoImage, NotBuilt, OutOfDate, Ready, Checking };
   Q_ENUM(State)
+
+  // A disc image against the known good dumps (core/dump_check.h).
+  enum DumpState { NotChecked = -1, DumpGood, DumpKnownBad, DumpUnknown };
+  Q_ENUM(DumpState)
 
   // OnLaunch values, for QML.
   enum LaunchAction { KeepOpen, Minimize, Close };
@@ -77,16 +88,20 @@ class Launcher : public QObject {
   double progress() const { return progress_; }
   QStringList buildLog() const { return build_log_; }
   QString runningId() const { return running_id_; }
+  QString verifyingId() const { return verifying_id_; }
+  double verifyProgress() const { return verify_progress_; }
   int onLaunch() const { return static_cast<int>(prefs_.on_launch); }
   void setOnLaunch(int value);
 
   // Looks at the games again: their images, builds and pictures.
   Q_INVOKABLE void refresh();
-  Q_INVOKABLE void play(int index, bool testMenu = false, bool freePlay = false, bool gameLog = false);
+  Q_INVOKABLE void play(int index, bool testMenu = false, bool gameLog = false);
   Q_INVOKABLE void addImage(const QUrl& file);
   Q_INVOKABLE void build(int index);
   Q_INVOKABLE void cancelBuild();
   Q_INVOKABLE void removeBuild(int index);
+  // Checks the game's disc image against the known good dumps again.
+  Q_INVOKABLE void checkImage(int index);
   // "home", "user", "screenshots", "logs", "cards", "backups" or "image" (shows the current game's disc image)
   Q_INVOKABLE void openFolder(const QString& which);
   Q_INVOKABLE void openLink(const QString& url);
@@ -97,6 +112,7 @@ class Launcher : public QObject {
   void buildingChanged();
   void progressChanged();
   void runningChanged();
+  void verifyChanged();
   void prefsChanged();
   void message(const QString& text, bool error);
   void gameStarting(const QString& id);  // before it starts: let go of the controllers
@@ -109,6 +125,17 @@ class Launcher : public QObject {
   void make_missing_art();
   void game_ended(const QString& id, int exit_code, bool crashed);
   void finish_build(bool ok, const QString& error);
+  // A source tree's games, built with CMake (see core/source_build.h).
+  void build_from_source(const Game& game, const QString& image);
+  void next_cmake_step();
+  void cmake_output();
+  void build_line(const QString& line);
+  // Disc images are checked one at a time, in the background, when there is
+  // no check of them yet (prefs_.image_checks).
+  void verify_next();
+  void finish_verify(const QString& id, const std::string& image, bool ok, const DumpCheck& check,
+                     const std::string& error, std::int64_t size, std::int64_t modified);
+  const ImageCheck* current_check(const QString& id, const QString& image) const;
   int row_of(const QString& id) const;
 
   static inline Launcher* instance_ = nullptr;
@@ -119,12 +146,18 @@ class Launcher : public QObject {
   int current_ = 0;
   bool checking_ = false;
   int generation_ = 0;
-  std::thread check_thread_, build_thread_, art_thread_;
-  std::atomic<bool> cancel_{false};
+  std::thread check_thread_, build_thread_, art_thread_, verify_thread_;
+  std::atomic<bool> cancel_{false}, stop_verify_{false};
   bool art_running_ = false, check_again_ = false;
-  QString building_id_, progress_text_, running_id_;
+  QString building_id_, progress_text_, running_id_, verifying_id_;
+  double verify_progress_ = 0;
+  std::set<std::string> verify_failed_;  // images that could not be read: not again until asked
   double progress_ = -1;
   QStringList build_log_;
+  std::vector<std::vector<std::string>> cmake_steps_;  // the CMake commands still to run
+  QProcess* cmake_ = nullptr;                          // the one running
+  QFile* cmake_log_ = nullptr;                         // what they print: build/<preset>/launcher-build.log
+  QString cmake_partial_, cmake_error_;                // a line not finished yet; the first error
 };
 
 }  // namespace launcher

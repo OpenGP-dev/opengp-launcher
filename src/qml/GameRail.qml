@@ -2,10 +2,13 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 
-// The games down the left, as on a game launcher; adding a game and the
-// settings at the bottom.
+// Home and the games down the left, as on a game launcher; adding a game and
+// the settings at the bottom.
 Rectangle {
     id: rail
+    property bool home: false  // Home is showing, not a game
+    signal openHome()
+    signal openGame(int index)
     signal addImage()
     signal openSettings()
     color: Theme.asphaltDeep
@@ -24,6 +27,56 @@ Rectangle {
             font.weight: Font.ExtraBold
         }
 
+        Item {
+            id: homeEntry
+            Layout.fillWidth: true
+            implicitHeight: 92
+
+            Rectangle {
+                width: 4
+                height: 52
+                radius: 2
+                x: 0
+                y: 6
+                color: Theme.marquee
+                visible: rail.home
+            }
+            Rectangle {
+                id: homeTile
+                width: 64; height: 64
+                radius: 16
+                anchors.horizontalCenter: parent.horizontalCenter
+                color: homeArea.containsMouse ? Theme.panelHover : Theme.panel
+                border.width: rail.home ? 2 : homeArea.containsMouse ? 1 : 0
+                border.color: rail.home ? Theme.marquee : Theme.dim
+                scale: homeArea.pressed ? 0.95 : 1
+                Behavior on scale { NumberAnimation { duration: 90 } }
+                Icon {
+                    anchors.centerIn: parent
+                    width: 28
+                    height: 28
+                    name: "home"
+                    color: rail.home ? Theme.chalk : Theme.dim
+                }
+            }
+            Text {
+                anchors.top: homeTile.bottom
+                anchors.topMargin: 6
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Home"
+                color: rail.home ? Theme.chalk : Theme.dim
+                font.pixelSize: Theme.small
+                font.weight: rail.home ? Font.ExtraBold : Font.Normal
+            }
+            MouseArea {
+                id: homeArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: rail.openHome()
+            }
+        }
+
         ListView {
             id: list
             Layout.fillWidth: true
@@ -40,7 +93,7 @@ Rectangle {
                 required property string tile
                 required property string gameId
                 required property int gameState
-                readonly property bool chosen: Launcher.currentIndex === index
+                readonly property bool chosen: !rail.home && Launcher.currentIndex === index
                 readonly property bool playable: gameState === Launcher.Ready
                 readonly property bool running: Launcher.runningId === gameId
                 width: ListView.view.width
@@ -137,7 +190,7 @@ Rectangle {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Launcher.currentIndex = entry.index
+                    onClicked: rail.openGame(entry.index)
                 }
             }
         }

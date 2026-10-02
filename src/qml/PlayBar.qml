@@ -49,31 +49,14 @@ Rectangle {
         // The button, with the run's options beside it.
         Row {
             spacing: 2
-            Button {
-                id: main
+            GameButton {
                 width: 232
                 height: 60
-                hoverEnabled: true
-                enabled: bar.mainEnabled()
-                onClicked: bar.mainAction()
-                contentItem: Text {
-                    text: bar.mainText()
-                    color: main.enabled ? Theme.inkOnMarquee : Theme.dim
-                    font.family: Theme.family
-                    font.pixelSize: 24
-                    font.weight: Font.ExtraBold
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                background: Rectangle {
-                    radius: 12
-                    topRightRadius: options.visible ? 4 : 12
-                    bottomRightRadius: options.visible ? 4 : 12
-                    color: !main.enabled ? Theme.panel
-                           : main.down ? Theme.marqueeDark : main.hovered ? "#FFD24F" : Theme.marquee
-                    border.width: main.visualFocus ? 2 : 0
-                    border.color: Theme.chalk
-                }
+                index: Launcher.currentIndex
+                gameId: bar.game.gameId || ""
+                gameState: bar.gameState
+                joined: options.visible
+                onAddImage: bar.addImage()
             }
             Button {
                 id: options
@@ -102,9 +85,8 @@ Rectangle {
                     y: -height - 8
                     width: 300
                     background: Rectangle { color: Theme.panel; radius: 10; border.color: Theme.line }
-                    RunItem { text: "Start in the test menu"; onTriggered: Launcher.play(Launcher.currentIndex, true, false, false) }
-                    RunItem { text: "Play with free play, just this once"; onTriggered: Launcher.play(Launcher.currentIndex, false, true, false) }
-                    RunItem { text: "Play and log the game's own messages"; onTriggered: Launcher.play(Launcher.currentIndex, false, false, true) }
+                    RunItem { text: "Start in the test menu"; onTriggered: Launcher.play(Launcher.currentIndex, true, false) }
+                    RunItem { text: "Play and log the game's own messages"; onTriggered: Launcher.play(Launcher.currentIndex, false, true) }
                 }
             }
         }
@@ -129,47 +111,41 @@ Rectangle {
                 font.pixelSize: Theme.body
                 elide: Text.ElideMiddle
             }
-            RowLayout {
+            ProgressBar {
+                id: progress
                 Layout.fillWidth: true
+                Layout.topMargin: 4
+                Layout.bottomMargin: 4
                 visible: bar.building
-                spacing: 12
-                ProgressBar {
-                    id: progress
-                    Layout.fillWidth: true
-                    from: 0
-                    to: 1
-                    value: Math.max(0, Launcher.progress)
-                    indeterminate: Launcher.progress < 0
-                    background: Rectangle { implicitHeight: 6; radius: 3; color: Theme.line }
-                    contentItem: Item {
-                        implicitHeight: 6
-                        Rectangle {
-                            visible: !progress.indeterminate
-                            width: progress.visualPosition * parent.width
-                            height: parent.height
-                            radius: 3
-                            color: Theme.marquee
-                        }
-                        Rectangle {
-                            id: runner
-                            visible: progress.indeterminate
-                            width: parent.width * 0.25
-                            height: parent.height
-                            radius: 3
-                            color: Theme.marquee
-                            XAnimator on x {
-                                running: progress.indeterminate && progress.visible
-                                from: -runner.width
-                                to: progress.width
-                                duration: 1400
-                                loops: Animation.Infinite
-                            }
+                from: 0
+                to: 1
+                value: Math.max(0, Launcher.progress)
+                indeterminate: Launcher.progress < 0
+                background: Rectangle { implicitHeight: 6; radius: 3; color: Theme.line }
+                contentItem: Item {
+                    implicitHeight: 6
+                    Rectangle {
+                        visible: !progress.indeterminate
+                        width: progress.visualPosition * parent.width
+                        height: parent.height
+                        radius: 3
+                        color: Theme.marquee
+                    }
+                    Rectangle {
+                        id: runner
+                        visible: progress.indeterminate
+                        width: parent.width * 0.25
+                        height: parent.height
+                        radius: 3
+                        color: Theme.marquee
+                        XAnimator on x {
+                            running: progress.indeterminate && progress.visible
+                            from: -runner.width
+                            to: progress.width
+                            duration: 1400
+                            loops: Animation.Infinite
                         }
                     }
-                }
-                PillButton {
-                    text: "Stop"
-                    onClicked: Launcher.cancelBuild()
                 }
             }
             Text {
@@ -180,6 +156,13 @@ Rectangle {
                 font.pixelSize: Theme.small + 1
                 elide: Text.ElideMiddle
             }
+        }
+
+        // Beside the progress, not under it: the bar has room for three lines.
+        PillButton {
+            visible: bar.building
+            text: "Stop"
+            onClicked: Launcher.cancelBuild()
         }
 
         Text {
@@ -205,33 +188,6 @@ Rectangle {
         background: Rectangle { radius: 6; color: item.highlighted ? Theme.panelHover : "transparent" }
     }
 
-    function mainText() {
-        if (building) return "Building"
-        if (runningThis) return "Playing"
-        switch (gameState) {
-        case Launcher.Checking: return "Checking"
-        case Launcher.NoImage: return "Add disc image"
-        case Launcher.NotBuilt: return Launcher.isPackage ? "Install" : "Not built"
-        case Launcher.OutOfDate: return "Update"
-        default: return "Play"
-        }
-    }
-    function mainEnabled() {
-        if (building || running || buildingOther) return gameState === Launcher.NoImage && !building
-        switch (gameState) {
-        case Launcher.Checking: return false
-        case Launcher.NotBuilt: return Launcher.isPackage
-        default: return true
-        }
-    }
-    function mainAction() {
-        switch (gameState) {
-        case Launcher.NoImage: bar.addImage(); break
-        case Launcher.NotBuilt:
-        case Launcher.OutOfDate: Launcher.build(Launcher.currentIndex); break
-        case Launcher.Ready: Launcher.play(Launcher.currentIndex); break
-        }
-    }
     function statusTitle() {
         if (building) return "Building " + game.title
         if (runningThis) return "Playing " + game.title
@@ -245,7 +201,7 @@ Rectangle {
         case Launcher.NoImage: return "OpenGP plays your own disc image of the game (.iso or .gcm)."
         case Launcher.NotBuilt:
             return Launcher.isPackage ? "Installing builds the game from your disc image. It takes a few minutes, once."
-                                      : "Build the game with CMake to play it from here."
+                                      : "Building runs CMake on this source tree with your disc image. The first build takes a while."
         case Launcher.OutOfDate: return "This game was built by another version of OpenGP. Updating builds it again."
         default: return "Ready to play"
         }

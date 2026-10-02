@@ -8,6 +8,8 @@
 #define TOML_EXCEPTIONS 0
 #include <toml.hpp>
 
+#include "core/source_build.h"
+
 namespace launcher {
 
 namespace {
@@ -69,7 +71,7 @@ fs::path find_source_build(const fs::path& dir, const installer::GameInfo& game,
     if (best.empty() || time > best_time) best = exe, best_time = time;
   }
   // None yet: where the default preset puts it.
-  return best.empty() ? dir / "build" / "default" / "games" / game.dir.filename() / (game.executable + suffix) : best;
+  return best.empty() ? dir / "build" / default_preset() / "games" / game.dir.filename() / (game.executable + suffix) : best;
 }
 
 }  // namespace

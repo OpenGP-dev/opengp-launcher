@@ -3,15 +3,17 @@
 The launcher for [OpenGP](https://github.com/OfficiallySp/OpenGP), the native PC port of Mario Kart
 Arcade GP 2 and GP 1. In one window:
 
+- **Home**: each game with the next thing to do (add its disc image, install or build it, play it),
+  and news from the OpenGP team (see [docs/news.md](docs/news.md)).
 - **Play** either game (GP 2 first; GP 1 when you have it), with one-off options: start in the test
-  menu, free play, the game's own log.
-- **Game management**: add your disc image of each game, and, in an installed package, build
-  (install) the game from it, update it after a new OpenGP, or uninstall it.
+  menu, or log the game's own messages.
+- **Game management**: add your disc image of each game, and build the game from it: in an
+  installed package, install it, update it after a new OpenGP, or uninstall it; in a source tree,
+  build it with CMake.
 - **Settings**: video, sound, game, camera, linked cabinets and controls (keyboard, gamepads,
   wheels), written to the same `user/settings.toml` and `user/controls.toml` the games read.
 - **Saves & data**: Mario Cards (hold, add, rename, copy, save as a file, delete), the game's own
   data (reset), backups of everything (back up, restore), screenshots and the last run's log.
-- **News** from the OpenGP team (see [docs/news.md](docs/news.md)).
 
 The pictures (each game's logo, button and course previews) come from your own disc image when you
 add it, into `user/art/`; none are part of the launcher.
@@ -51,14 +53,18 @@ Options:
 
 In an installed OpenGP package the launcher is `OpenGP` (`OpenGP.exe`, `OpenGP.app`) and looks after
 the folder it is in. A development build looks after `LAUNCHER_DEV_HOME`, which is an OpenGP source
-tree: it plays the games CMake built there (`build/*/games/`), and cannot install them itself.
+tree: it plays the games CMake built there (`build/*/games/`), and its Build button builds them
+there with CMake (`source_build`): it puts the game's `main.dol` from your disc image in `orig/`,
+configures the tree (the `default` preset, `clang-cl` on Windows, or the build folder already
+there) and builds the game, with CMake's output in `build/<preset>/launcher-build.log`. On
+Windows, start the launcher from OpenGP's dev shell (`tools/devshell.ps1`) so CMake finds clang-cl.
 
 ```
 OpenGP [--home DIR] [--user-dir DIR] [--game ID] [--play]    --play: start the game at once (shortcuts)
 OpenGP --version
 OpenGP --smoke-test                          load the interface and quit (fails on any QML warning)
 OpenGP --screenshot-ui FILE [--view VIEW]    a picture of the window, then quit
-                                             VIEW: play, saves, settings/<page>
+                                             VIEW: home, play, saves, settings/<page>
 ```
 
 Settings and saves are in `<home>/user/` (or `--user-dir`): the games' `settings.toml`,
@@ -69,7 +75,7 @@ last two runs), `backups/` and `news.toml` (the news last downloaded).
 
 | | |
 |---|---|
-| `src/core/` | plain C++ on OpenGP's libraries, tested in `tests/`: finding OpenGP (`home`), the games' states (`library`), running a game (`game_process`), pictures from TPL textures (`art`), cards and backups (`user_data`), the news feed (`news`), the launcher's settings (`prefs`), keys as SDL scancodes (`scancodes`) |
+| `src/core/` | plain C++ on OpenGP's libraries, tested in `tests/`: finding OpenGP (`home`), the games' states (`library`), disc images against the known good dumps (`dump_check`), running a game (`game_process`), building a source tree's games (`source_build`), pictures from TPL textures (`art`), cards and backups (`user_data`), the news feed (`news`), the launcher's settings (`prefs`), keys as SDL scancodes (`scancodes`) |
 | `src/qt/` | what QML sees: `Launcher` (games, play, build, add image), `GameSettings`, `Controls`, `UserData`, `News`, and the pictures (`art_maker`) |
 | `src/qml/` | the interface (Qt Quick) |
 
@@ -84,6 +90,13 @@ Things it takes care of:
   window); keys pressed in the launcher's window become the SDL scancodes the games name keys by,
   through SDL's own tables (`scancode_tables.cpp`, made by `tools/gen_scancodes.py`). While a game
   runs, the launcher lets go of the controllers.
+
+## Roadmap
+
+| # | Feature |
+|---|---------|
+| L1 | Disc image checking: each image checked against the known good dump of its game (the SHA-1 of the image after its header, from FIX94's [triforce-header-patcher](https://github.com/FIX94/triforce-header-patcher)), in the background, on the Play tab (`dump_check`) (**done**) |
+| L2 | Drag and drop: drop an `.iso` or `.gcm` on the window to add it, as **Add disc image** does |
 
 ## Licence
 

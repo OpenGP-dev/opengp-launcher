@@ -5,21 +5,26 @@ import QtQuick.Layouts
 
 ApplicationWindow {
     id: window
-    // What to show first (--view): play, saves, news, settings/<page>.
+    // What to show first (--view): home, play, saves, news (on Home), settings/<page>.
     property string startView
     // The chosen game's entry ({gameId, title, state, logo, heroes, ...}).
     property var game: ({})
-    property int tab: 0  // 0 play, 1 saves & data
+    property bool home: true  // Home, else the chosen game's page
+    property int tab: 0       // the game's page: 0 play, 1 saves & data
 
     visible: true
     minimumWidth: 1000
     minimumHeight: 640
-    title: game.title ? "OpenGP: " + game.title : "OpenGP"
+    title: !home && game.title ? "OpenGP: " + game.title : "OpenGP"
     color: Theme.asphalt
     font.family: Theme.family
 
     function updateGame() { game = Launcher.games.get(Launcher.currentIndex) }
     function addImage() { imageDialog.open() }
+    function openGame(index) {
+        Launcher.currentIndex = index
+        home = false
+    }
 
     Connections {
         target: Launcher.games
@@ -34,6 +39,7 @@ ApplicationWindow {
     }
     Component.onCompleted: {
         updateGame()
+        if (startView === "play" || startView === "saves") home = false
         if (startView === "saves") tab = 1
         else if (startView.startsWith("settings")) settings.openPage(startView.split("/")[1] || "")
     }
@@ -45,6 +51,9 @@ ApplicationWindow {
         GameRail {
             Layout.fillHeight: true
             Layout.preferredWidth: 96
+            home: window.home
+            onOpenHome: window.home = true
+            onOpenGame: index => window.openGame(index)
             onAddImage: window.addImage()
             onOpenSettings: settings.openPage("")
         }
@@ -56,13 +65,20 @@ ApplicationWindow {
             HeroPane {
                 anchors.fill: parent
                 game: window.game
-                dim: window.tab === 1 ? 0.7 : 0
+                dim: window.home ? 0.55 : window.tab === 1 ? 0.7 : 0
+            }
+
+            HomeView {
+                anchors.fill: parent
+                visible: Launcher.homeError.length === 0 && window.home
+                onAddImage: window.addImage()
+                onOpenGame: index => window.openGame(index)
             }
 
             ColumnLayout {
                 anchors.fill: parent
                 spacing: 0
-                visible: Launcher.homeError.length === 0
+                visible: Launcher.homeError.length === 0 && !window.home
 
                 // The game's logo, its name and the tabs.
                 ColumnLayout {

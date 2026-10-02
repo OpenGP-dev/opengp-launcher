@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-// The news, and the chosen game's disc image and build.
+// The chosen game's disc image and build (the news is on Home).
 Item {
     id: tab
     property var game: ({})
@@ -14,15 +14,9 @@ Item {
         anchors.bottomMargin: 24
         spacing: 32
 
-        NewsPanel {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.maximumWidth: 720
-        }
-
         // About this game's files.
         Rectangle {
-            Layout.preferredWidth: 320
+            Layout.preferredWidth: 380
             Layout.alignment: Qt.AlignTop
             implicitHeight: info.implicitHeight + 40
             radius: 14
@@ -56,6 +50,34 @@ Item {
                     font.pixelSize: Theme.small
                     elide: Text.ElideMiddle
                 }
+                // Against the known good dumps, checked in the background.
+                RowLayout {
+                    Layout.fillWidth: true
+                    visible: !!tab.game.image
+                    spacing: 8
+                    Rectangle {
+                        Layout.alignment: Qt.AlignTop
+                        Layout.topMargin: 6
+                        width: 8; height: 8; radius: 4
+                        color: tab.dumpColor()
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: tab.dumpText()
+                        color: Theme.chalk
+                        font.pixelSize: Theme.body
+                        wrapMode: Text.WordWrap
+                    }
+                }
+                Text {
+                    Layout.fillWidth: true
+                    visible: !!tab.game.image && text.length > 0 && !tab.verifying
+                    text: tab.game.dumpCheck === Launcher.DumpGood ? (tab.game.dumpName || "") : (tab.game.dumpNote || "")
+                    color: Theme.dim
+                    font.pixelSize: Theme.small
+                    wrapMode: Text.WordWrap
+                    lineHeight: 1.2
+                }
                 Flow {
                     Layout.fillWidth: true
                     spacing: 8
@@ -68,6 +90,12 @@ Item {
                         text: "Show file"
                         visible: !!tab.game.image
                         onClicked: Launcher.openFolder("image")
+                    }
+                    PillButton {
+                        text: "Check again"
+                        visible: !!tab.game.image && tab.game.dumpCheck !== Launcher.NotChecked
+                        enabled: Launcher.verifyingId.length === 0
+                        onClicked: Launcher.checkImage(Launcher.currentIndex)
                     }
                 }
 
@@ -89,7 +117,7 @@ Item {
                         switch (tab.game.gameState) {
                         case Launcher.Ready: return Launcher.isPackage ? "Installed, built by this version of OpenGP." : "Built from the OpenGP source tree."
                         case Launcher.OutOfDate: return "Built by another version of OpenGP."
-                        case Launcher.NotBuilt: return "Not installed yet."
+                        case Launcher.NotBuilt: return Launcher.isPackage ? "Not installed yet." : "Not built yet."
                         case Launcher.NoImage: return "Needs its disc image."
                         default: return "Checking"
                         }
@@ -98,31 +126,51 @@ Item {
                 Flow {
                     Layout.fillWidth: true
                     spacing: 8
-                    visible: Launcher.isPackage
                     PillButton {
                         text: "Build again"
                         visible: tab.game.gameState === Launcher.Ready
                         enabled: Launcher.runningId.length === 0 && Launcher.buildingId.length === 0
                         onClicked: confirm.ask("Build " + tab.game.title + " again?",
-                                               "OpenGP builds the game from your disc image again. It takes a few minutes.",
+                                               Launcher.isPackage ? "OpenGP builds the game from your disc image again. It takes a few minutes."
+                                                                  : "CMake builds the game from this source tree again, with your disc image.",
                                                "Build again", false, () => Launcher.build(Launcher.currentIndex))
                     }
                     PillButton {
                         text: "Uninstall"
-                        visible: tab.game.gameState === Launcher.Ready || tab.game.gameState === Launcher.OutOfDate
+                        visible: Launcher.isPackage && (tab.game.gameState === Launcher.Ready || tab.game.gameState === Launcher.OutOfDate)
                         enabled: Launcher.runningId.length === 0 && Launcher.buildingId.length === 0
                         onClicked: confirm.ask("Uninstall " + tab.game.title + "?",
                                                "This removes the built game. Your disc image, settings, cards and records stay.",
                                                "Uninstall", true, () => Launcher.removeBuild(Launcher.currentIndex))
                     }
-                }
-                PillButton {
-                    text: "Open the OpenGP folder"
-                    onClicked: Launcher.openFolder("home")
+                    PillButton {
+                        text: "Open the OpenGP folder"
+                        onClicked: Launcher.openFolder("home")
+                    }
                 }
             }
         }
     }
 
     ConfirmDialog { id: confirm }
+
+    readonly property bool verifying: Launcher.verifyingId.length > 0 && Launcher.verifyingId === game.gameId
+    function dumpText() {
+        if (verifying) return "Checking it against the known good dump: " + Math.round(Launcher.verifyProgress * 100) + "%"
+        switch (game.dumpCheck) {
+        case Launcher.DumpGood: return "A known good dump"
+        case Launcher.DumpKnownBad: return "A known bad dump"
+        case Launcher.DumpUnknown: return "Not a known good dump"
+        default: return "Not checked yet"
+        }
+    }
+    function dumpColor() {
+        if (verifying) return Theme.blue
+        switch (game.dumpCheck) {
+        case Launcher.DumpGood: return Theme.green
+        case Launcher.DumpKnownBad: return Theme.red
+        case Launcher.DumpUnknown: return Theme.marquee
+        default: return Theme.faint
+        }
+    }
 }

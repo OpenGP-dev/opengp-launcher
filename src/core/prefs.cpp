@@ -52,6 +52,21 @@ bool load_prefs(const std::string& path, Prefs* prefs, std::string* error) {
     for (const toml::node& n : *seen)
       if (auto s = n.value<std::string>()) p.news_seen.insert(*s);
   }
+  if (const toml::table* checks = t["image_checks"].as_table()) {
+    p.image_checks.clear();
+    for (const auto& [id, node] : *checks) {
+      const toml::table* c = node.as_table();
+      if (!c) continue;
+      ImageCheck ic;
+      ic.image = (*c)["image"].value_or(std::string());
+      ic.size = (*c)["size"].value_or(std::int64_t{0});
+      ic.modified = (*c)["modified"].value_or(std::int64_t{0});
+      ic.verdict = (*c)["verdict"].value_or(std::string());
+      ic.dump = (*c)["dump"].value_or(std::string());
+      ic.note = (*c)["note"].value_or(std::string());
+      p.image_checks[std::string(id.str())] = std::move(ic);
+    }
+  }
   *prefs = std::move(p);
   return true;
 }
@@ -66,6 +81,15 @@ bool save_prefs(const std::string& path, const Prefs& prefs, std::string* error)
                                {"window_height", prefs.window_height}}},
       {"news", toml::table{{"enabled", prefs.news}, {"url", prefs.news_url}, {"seen", std::move(seen)}}},
   };
+  toml::table checks;
+  for (const auto& [id, c] : prefs.image_checks)
+    checks.insert(id, toml::table{{"image", c.image},
+                                  {"size", c.size},
+                                  {"modified", c.modified},
+                                  {"verdict", c.verdict},
+                                  {"dump", c.dump},
+                                  {"note", c.note}});
+  if (!checks.empty()) t.insert("image_checks", std::move(checks));
   std::ostringstream out;
   out << "# The OpenGP launcher's settings (the games' are in settings.toml).\n\n" << t << "\n";
   const std::string text = out.str();

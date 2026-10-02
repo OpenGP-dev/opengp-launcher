@@ -1,6 +1,7 @@
 # The launcher's core: plain C++ on OpenGP's libraries (tested in tests/).
 add_library(launcher_core STATIC
   core/art.cpp
+  core/dump_check.cpp
   core/game_process.cpp
   core/home.cpp
   core/library.cpp
@@ -8,6 +9,7 @@ add_library(launcher_core STATIC
   core/prefs.cpp
   core/scancode_tables.cpp
   core/scancodes.cpp
+  core/source_build.cpp
   core/user_data.cpp
 )
 target_include_directories(launcher_core PUBLIC .)
@@ -32,6 +34,8 @@ qt_add_qml_module(opengp_launcher
     qml/Main.qml
     qml/Theme.qml
     qml/GameRail.qml
+    qml/HomeView.qml
+    qml/GameButton.qml
     qml/HeroPane.qml
     qml/PlayBar.qml
     qml/PlayTab.qml
@@ -68,7 +72,10 @@ target_compile_definitions(opengp_launcher PRIVATE
   LAUNCHER_VERSION="${PROJECT_VERSION}"
   OPENGP_VERSION="${OPENGP_VERSION}"
   LAUNCHER_DEV_HOME="${LAUNCHER_DEV_HOME}"
-  LAUNCHER_NEWS_URL="${LAUNCHER_NEWS_URL}")
+  LAUNCHER_NEWS_URL="${LAUNCHER_NEWS_URL}"
+  # The CMake and Ninja this was built with, to build the games of a source tree.
+  LAUNCHER_CMAKE="${CMAKE_COMMAND}"
+  LAUNCHER_MAKE_PROGRAM="${CMAKE_MAKE_PROGRAM}")
 set_target_properties(opengp_launcher PROPERTIES
   OUTPUT_NAME OpenGP
   MACOSX_BUNDLE_BUNDLE_NAME OpenGP

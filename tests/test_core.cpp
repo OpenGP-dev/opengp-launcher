@@ -12,12 +12,15 @@
 #include <SDL3/SDL_scancode.h>
 
 #include "core/art.h"
+#include "core/dump_check.h"
 #include "core/game_process.h"
 #include "core/home.h"
 #include "core/news.h"
 #include "core/prefs.h"
 #include "core/scancodes.h"
+#include "core/source_build.h"
 #include "core/user_data.h"
+#include "disc/sha1.h"
 
 using namespace launcher;
 
@@ -110,6 +113,8 @@ TEST_CASE("an installed package and a source tree are found") {
     CHECK(home.games[0].info.id == "GGPE02");  // the main game first
     CHECK(home.games[0].exe == src / "build" / "clang-cl" / "games" / "mkgp2" / (std::string("opengp-mkgp2") + kExe));
     CHECK(home.games[1].short_title == "GP1");
+    CHECK(home.games[1].exe ==  // not built yet: where the default preset puts it
+          src / "build" / default_preset() / "games" / "mkgp1" / (std::string("opengp-mkgp1") + kExe));
     CHECK(default_home(src, dir.path / "fallback") == dir.path / "fallback");
   }
   Home home;
@@ -130,6 +135,7 @@ TEST_CASE("the launcher's settings are kept") {
   prefs.news = false;
   prefs.news_url = "file:///news.toml";
   prefs.news_seen = {"a", "b"};
+  prefs.image_checks["GGPE02"] = {"/games/gp2.iso", 503316480, 1234567890123, "good", "GP 2 [Feb 7 2007]", ""};
   REQUIRE(save_prefs(path, prefs, &error));
   Prefs back;
   REQUIRE(load_prefs(path, &back, &error));
@@ -312,4 +318,110 @@ TEST_CASE("a game that restarts itself is followed until it really ends") {
 
   GameProcess missing;
   CHECK_FALSE(missing.start(utf8(dir.path / "no-such-game"), {}, log, &error));
+}
+
+TEST_CASE("a source tree's game is built with CMake from the player's image") {
+  TempDir dir("opengp_launcher_source_build");
+  const fs::path src = dir.path / "src";
+  write(src / "games" / "mkgp2" / "game.toml", kGameToml);
+
+  // A disc image: the header (ID, GameCube magic word, where main.dol is),
+  // then a main.dol of just its 0x100-byte header (no sections).
+  std::string image(0x440 + 0x100, '\0');
+  image.replace(0, 6, "GGPE02");
+  image.replace(0x1C, 4, "\xC2\x33\x9F\x3D");
+  image.replace(0x420, 4, std::string("\0\0\x04\x40", 4));
+  image[0x440 + 0xE0] = 0x12;  // the entry point: something to tell it apart
+  const std::string dol = image.substr(0x440);
+  write(dir.path / "game.iso", image);
+
+  Home home;
+  std::string error;
+  REQUIRE_MESSAGE(open_home(src, {}, &home, &error), error);
+  Game game = home.games[0];
+
+  // Only the supported release.
+  CHECK_FALSE(extract_dol(home, game, (dir.path / "game.iso").string(), &error));
+  CHECK(error.find("not the supported release") != std::string::npos);
+  game.info.dol_sha1 = disc::to_hex(disc::sha1(dol.data(), dol.size()));
+  REQUIRE_MESSAGE(extract_dol(home, game, (dir.path / "game.iso").string(), &error), error);
+  CHECK(read(src / "orig" / "GGPE02" / "sys" / "main.dol") == dol);
+
+  // Not configured yet: by the preset, then the game's target.
+  SourceBuild b = source_build(home, game, "cmake", "/bin/ninja");
+  CHECK(b.build_dir == src / "build" / default_preset());
+  REQUIRE(b.commands.size() == 2);
+  CHECK(b.commands[0] == std::vector<std::string>{"cmake", "--preset", default_preset(), "-DOPENGP_BUILD_GAMES=ON",
+                                                  "-DCMAKE_MAKE_PROGRAM=/bin/ninja"});
+  CHECK(b.commands[1] == std::vector<std::string>{"cmake", "--build", utf8(b.build_dir), "--target", "opengp-mkgp2"});
+
+  // Configured before (here by hand, not by a preset): that build directory again.
+  game.exe = src / "build" / "mine" / "games" / "mkgp2" / "opengp-mkgp2";
+  write(src / "build" / "mine" / "CMakeCache.txt", "");
+  b = source_build(home, game, "cmake", "");
+  CHECK(b.build_dir == src / "build" / "mine");
+  REQUIRE(b.commands.size() == 2);
+  CHECK(b.commands[0] ==
+        std::vector<std::string>{"cmake", "-S", utf8(src), "-B", utf8(b.build_dir), "-DOPENGP_BUILD_GAMES=ON"});
+
+  CHECK(ninja_progress("[25/100] Building CXX object games/mkgp2/generated/recomp_001.cpp.o") == doctest::Approx(0.25));
+  CHECK(ninja_progress("[100/100] Linking CXX executable games/mkgp2/opengp-mkgp2") == doctest::Approx(1.0));
+  CHECK(ninja_progress("-- Configuring done") < 0);
+  CHECK(ninja_progress("[0/0]") < 0);
+}
+
+TEST_CASE("disc images are checked against the known good dumps") {
+  // The streaming SHA-1 agrees with OpenGP's, across block boundaries.
+  std::string data;
+  for (int i = 0; i < 1000; ++i) data += static_cast<char>(i * 7);
+  for (std::size_t n : {0u, 1u, 55u, 56u, 63u, 64u, 65u, 119u, 1000u}) {
+    Sha1 sha;
+    sha.update(data.data(), n / 3);
+    sha.update(data.data() + n / 3, n - n / 3);
+    CHECK(sha.hex() == disc::to_hex(disc::sha1(data.data(), n)));
+  }
+  Sha1 abc;
+  abc.update("abc", 3);
+  CHECK(abc.hex() == "a9993e364706816aba3e25717850c26c9cd0d89d");  // FIPS 180 example
+
+  TempDir dir("opengp_launcher_dump_check");
+  const std::string image = utf8(dir.path / "gp.iso");
+  DumpCheck check;
+  std::string error;
+  write(dir.path / "gp.iso", std::string(0x1000, '\0'));
+  CHECK_FALSE(check_dump(image, "GXXX01", {}, nullptr, &check, &error));  // no known dump
+  REQUIRE_MESSAGE(check_dump(image, "GGPE01", {}, nullptr, &check, &error), error);
+  CHECK(check.verdict == DumpVerdict::Unknown);
+  CHECK(check.note.find("cut short") != std::string::npos);
+  CHECK(check.body_sha1.empty());
+
+  // As big as GP's dump, plus 16 bytes: sparse, so cheap to make.
+  constexpr std::uint64_t kGpSize = 0x15000000;
+  auto make = [&](const std::string& tail) {
+    fs::remove(dir.path / "gp.iso");
+    std::ofstream f(dir.path / "gp.iso", std::ios::binary);
+    f.seekp(static_cast<std::streamoff>(kGpSize));
+    f.write(tail.data(), static_cast<std::streamsize>(tail.size()));
+  };
+  make(std::string(16, 'x'));
+  REQUIRE(check_dump(image, "GGPE01", {}, nullptr, &check, &error));
+  CHECK(check.verdict == DumpVerdict::Unknown);
+  CHECK(check.note.find("not padding") != std::string::npos);
+
+  make(std::string("\xB9\x91\xFB\xC2\xD5\xB9\x02\x44\xB9\x91\xFB\xC2\xD5\xB9\x02\x44", 16));
+  std::atomic<bool> cancel{true};
+  CHECK_FALSE(check_dump(image, "GGPE01", {}, &cancel, &check, &error));
+  CHECK(error == "cancelled");
+  double last = 0;
+  REQUIRE(check_dump(image, "GGPE01", [&](double f) { last = f; }, nullptr, &check, &error));
+  CHECK(last == doctest::Approx(1.0));
+  CHECK(check.verdict == DumpVerdict::Unknown);  // padded well, but all zeros
+  CHECK(check.dump == "Mario Kart Arcade GP [Feb 14 2006 13:09:48]");
+  CHECK(check.body_sha1.size() == 40);
+  CHECK(check.note.find("differs") != std::string::npos);
+
+  std::int64_t size = 0, modified = 0;
+  REQUIRE(image_stamp(image, &size, &modified));
+  CHECK(size == static_cast<std::int64_t>(kGpSize + 16));
+  CHECK_FALSE(image_stamp(utf8(dir.path / "none.iso"), &size, &modified));
 }

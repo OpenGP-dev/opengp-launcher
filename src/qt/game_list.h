@@ -27,6 +27,9 @@ class GameList : public QAbstractListModel {
     LogoRole,   // file URLs, "" if none
     TileRole,
     HeroesRole,
+    DumpCheckRole,  // the image against the known good dumps: Launcher.DumpState
+    DumpNameRole,   // the known good dump it is, or should be
+    DumpNoteRole,   // what is wrong with it, or "" if nothing
   };
 
   struct Entry {
@@ -34,6 +37,8 @@ class GameList : public QAbstractListModel {
     int state = 0;
     QString logo, tile;
     QStringList heroes;
+    int dump_check = -1;  // Launcher::DumpState; -1 (NotChecked) until it is
+    QString dump_name, dump_note;
   };
 
   using QAbstractListModel::QAbstractListModel;

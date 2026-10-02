@@ -2,8 +2,8 @@ pragma Singleton
 import QtQuick
 
 // The launcher's look: night asphalt, with the cabinets' marquee yellow for
-// the one thing to press, GP 2's blue for links and focus, and signal red
-// for trouble. One rounded typeface (M PLUS Rounded 1c), two weights.
+// the one thing to press, GP 2's blue for links and focus, signal red for
+// trouble and green for a check passed. One rounded typeface (M PLUS Rounded 1c), two weights.
 QtObject {
     readonly property color asphalt: "#1D2331"      // the window
     readonly property color asphaltDeep: "#151A25"  // the game rail, the play bar
@@ -15,6 +15,7 @@ QtObject {
     readonly property color inkOnMarquee: "#1B1405"
     readonly property color blue: "#3B9BEF"         // links, focus, switches
     readonly property color red: "#E5243B"          // errors, a game running
+    readonly property color green: "#3FBF74"        // a check passed (a good disc image)
     readonly property color chalk: "#F2F4F8"        // text
     readonly property color dim: "#98A3B6"          // secondary text
     readonly property color faint: "#6B768A"

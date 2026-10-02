@@ -1,7 +1,7 @@
 import QtQuick
 
 // The few icons the launcher needs, drawn (no icon font): plus, gear,
-// chevron (down) and cross.
+// chevron (down), cross and home.
 Canvas {
     id: icon
     property string name: "plus"
@@ -31,6 +31,14 @@ Canvas {
             ctx.stroke()
         } else if (name === "chevron") {
             ctx.moveTo(w * 0.22, h * 0.38); ctx.lineTo(cx, h * 0.64); ctx.lineTo(w * 0.78, h * 0.38)
+            ctx.stroke()
+        } else if (name === "home") {
+            // A house: the roof, then the walls with a door.
+            ctx.moveTo(w * 0.12, h * 0.48); ctx.lineTo(cx, h * 0.14); ctx.lineTo(w * 0.88, h * 0.48)
+            ctx.moveTo(w * 0.24, h * 0.40); ctx.lineTo(w * 0.24, h * 0.86); ctx.lineTo(w * 0.76, h * 0.86)
+            ctx.lineTo(w * 0.76, h * 0.40)
+            ctx.moveTo(w * 0.42, h * 0.86); ctx.lineTo(w * 0.42, h * 0.62); ctx.lineTo(w * 0.58, h * 0.62)
+            ctx.lineTo(w * 0.58, h * 0.86)
             ctx.stroke()
         } else if (name === "gear") {
             // Eight teeth around a ring.

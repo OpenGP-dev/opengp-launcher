@@ -9,7 +9,7 @@
 //   OpenGP --version
 //   OpenGP --smoke-test                 load the interface and quit (0 if it loaded without warnings)
 //   OpenGP --screenshot-ui FILE [--view VIEW]   save a picture of the window and quit
-//     VIEW: play, saves, settings/<page>, news
+//     VIEW: home, play, saves, settings/<page>, news (on Home)
 
 #include <QCommandLineParser>
 #include <QDir>
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
                                     QStringLiteral("file"));
   const QCommandLineOption game_opt(QStringLiteral("game"), QStringLiteral("The game to show first (its ID)."),
                                     QStringLiteral("id"));
-  const QCommandLineOption view_opt(QStringLiteral("view"), QStringLiteral("What to show first (play, saves, news, settings/<page>)."),
+  const QCommandLineOption view_opt(QStringLiteral("view"), QStringLiteral("What to show first (home, play, saves, news, settings/<page>)."),
                                     QStringLiteral("view"));
   const QCommandLineOption play_opt(QStringLiteral("play"), QStringLiteral("Start the game at once (for shortcuts)."));
   args.addOptions({home_opt, user_opt, smoke_opt, shot_opt, game_opt, view_opt, play_opt});
