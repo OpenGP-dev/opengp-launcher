@@ -54,7 +54,7 @@ the folder it is in. A development build looks after `LAUNCHER_DEV_HOME`, which 
 tree: it plays the games CMake built there (`build/*/games/`), and cannot install them itself.
 
 ```
-OpenGP [--home DIR] [--user-dir DIR] [--game ID]
+OpenGP [--home DIR] [--user-dir DIR] [--game ID] [--play]    --play: start the game at once (shortcuts)
 OpenGP --version
 OpenGP --smoke-test                          load the interface and quit (fails on any QML warning)
 OpenGP --screenshot-ui FILE [--view VIEW]    a picture of the window, then quit

@@ -4,7 +4,8 @@
 // their settings and controls, add the disc images and build the games, and
 // look after the saves.
 //
-//   OpenGP [--home DIR] [--user-dir DIR]
+//   OpenGP [--home DIR] [--user-dir DIR] [--game ID] [--play]
+//     --play starts the game (the last one chosen, or --game) once it is found ready
 //   OpenGP --version
 //   OpenGP --smoke-test                 load the interface and quit (0 if it loaded without warnings)
 //   OpenGP --screenshot-ui FILE [--view VIEW]   save a picture of the window and quit
@@ -93,7 +94,8 @@ int main(int argc, char** argv) {
                                     QStringLiteral("id"));
   const QCommandLineOption view_opt(QStringLiteral("view"), QStringLiteral("What to show first (play, saves, news, settings/<page>)."),
                                     QStringLiteral("view"));
-  args.addOptions({home_opt, user_opt, smoke_opt, shot_opt, game_opt, view_opt});
+  const QCommandLineOption play_opt(QStringLiteral("play"), QStringLiteral("Start the game at once (for shortcuts)."));
+  args.addOptions({home_opt, user_opt, smoke_opt, shot_opt, game_opt, view_opt, play_opt});
   args.process(app);
   if (args.isSet(smoke_opt) || args.isSet(shot_opt)) attach_console();
 
@@ -122,6 +124,18 @@ int main(int argc, char** argv) {
       if (launcher.games()->at(i).id == args.value(game_opt)) launcher.setCurrentIndex(i);
   UserData user_data;
   News news;
+
+  // --play: once the first look at the games is done.
+  if (args.isSet(play_opt)) {
+    auto* once = new QObject(&launcher);
+    QObject::connect(&launcher, &Launcher::checkingChanged, once, [&launcher, once] {
+      if (launcher.checking()) return;
+      const int row = launcher.currentIndex();
+      if (launcher.games()->at(row).state == Launcher::Ready) launcher.play(row);
+      else emit launcher.message(launcher.games()->at(row).title + QStringLiteral(" isn't ready to play yet."), true);
+      once->deleteLater();
+    });
+  }
 
   // A running game has the controllers and the settings files.
   QObject::connect(&launcher, &Launcher::gameStarting, [&] {

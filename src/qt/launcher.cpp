@@ -136,7 +136,6 @@ void Launcher::refresh() {
 
 void Launcher::apply_statuses(int generation, const std::vector<GameStatus>& statuses) {
   checking_ = false;
-  emit checkingChanged();
   if (generation == generation_) {
     for (int i = 0; i < games_.rowCount() && i < static_cast<int>(statuses.size()); ++i) {
       GameList::Entry e = games_.at(i);
@@ -147,8 +146,10 @@ void Launcher::apply_statuses(int generation, const std::vector<GameStatus>& sta
       games_.update(i, e);
     }
     emit currentChanged();  // the current game's details changed
-    make_missing_art();
   }
+  // After the games' states, so that whoever waited for the check sees them.
+  emit checkingChanged();
+  if (generation == generation_) make_missing_art();
   if (check_again_) {
     check_again_ = false;
     refresh();
