@@ -1,0 +1,8 @@
+/build/
+/out/
+# Settings and saves when the launcher looks after itself (tests, a copy of user/)
+/user*/
+__pycache__/
+*.user
+.vs/
+.vscode/

@@ -1,0 +1,187 @@
+import QtQuick
+import QtQuick.Controls.Basic
+import QtQuick.Dialogs
+import QtQuick.Layouts
+
+ApplicationWindow {
+    id: window
+    // What to show first (--view): play, saves, news, settings/<page>.
+    property string startView
+    // The chosen game's entry ({gameId, title, state, logo, heroes, ...}).
+    property var game: ({})
+    property int tab: 0  // 0 play, 1 saves & data
+
+    visible: true
+    minimumWidth: 1000
+    minimumHeight: 640
+    title: game.title ? "OpenGP: " + game.title : "OpenGP"
+    color: Theme.asphalt
+    font.family: Theme.family
+
+    function updateGame() { game = Launcher.games.get(Launcher.currentIndex) }
+    function addImage() { imageDialog.open() }
+
+    Connections {
+        target: Launcher.games
+        function onDataChanged() { window.updateGame() }
+        function onModelReset() { window.updateGame() }
+    }
+    Connections {
+        target: Launcher
+        function onCurrentChanged() { window.updateGame() }
+        function onMessage(text, error) { toast.show(text, error) }
+        function onMinimizeRequested() { window.showMinimized() }
+    }
+    Component.onCompleted: {
+        updateGame()
+        if (startView === "saves") tab = 1
+        else if (startView.startsWith("settings")) settings.openPage(startView.split("/")[1] || "")
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        GameRail {
+            Layout.fillHeight: true
+            Layout.preferredWidth: 96
+            onAddImage: window.addImage()
+            onOpenSettings: settings.openPage("")
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            HeroPane {
+                anchors.fill: parent
+                game: window.game
+                dim: window.tab === 1 ? 0.7 : 0
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                spacing: 0
+                visible: Launcher.homeError.length === 0
+
+                // The game's logo, its name and the tabs.
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 48
+                    Layout.rightMargin: 48
+                    Layout.topMargin: 36
+                    spacing: 14
+
+                    Item {
+                        Layout.preferredHeight: 120
+                        Layout.fillWidth: true
+                        Image {
+                            id: logo
+                            source: window.game.logo || ""
+                            visible: status === Image.Ready
+                            height: 120
+                            width: Math.min(implicitWidth * height / Math.max(1, implicitHeight), parent.width)
+                            fillMode: Image.PreserveAspectFit
+                            horizontalAlignment: Image.AlignLeft
+                            smooth: true
+                            mipmap: true
+                        }
+                        Text {
+                            visible: !logo.visible
+                            anchors.bottom: parent.bottom
+                            text: window.game.title || ""
+                            color: Theme.chalk
+                            font.pixelSize: Theme.display + 6
+                            font.weight: Font.ExtraBold
+                        }
+                    }
+
+                    RowLayout {
+                        spacing: 28
+                        Repeater {
+                            model: ["Play", "Saves & data"]
+                            delegate: Item {
+                                id: tabItem
+                                required property int index
+                                required property string modelData
+                                implicitWidth: label.implicitWidth
+                                implicitHeight: label.implicitHeight + 10
+                                Text {
+                                    id: label
+                                    text: tabItem.modelData
+                                    color: window.tab === tabItem.index ? Theme.chalk : Theme.dim
+                                    font.pixelSize: Theme.lead + 1
+                                    font.weight: window.tab === tabItem.index ? Font.ExtraBold : Font.Normal
+                                }
+                                Rectangle {
+                                    anchors.bottom: parent.bottom
+                                    width: parent.width
+                                    height: 3
+                                    radius: 2
+                                    color: Theme.marquee
+                                    visible: window.tab === tabItem.index
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: window.tab = tabItem.index
+                                }
+                            }
+                        }
+                    }
+                }
+
+                StackLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.topMargin: 20
+                    currentIndex: window.tab
+                    PlayTab {
+                        game: window.game
+                        onAddImage: window.addImage()
+                    }
+                    SavesTab {}
+                }
+
+                PlayBar {
+                    Layout.fillWidth: true
+                    game: window.game
+                    onAddImage: window.addImage()
+                }
+            }
+
+            // OpenGP is not where the launcher looked.
+            ColumnLayout {
+                anchors.centerIn: parent
+                width: Math.min(parent.width - 96, 620)
+                visible: Launcher.homeError.length > 0
+                spacing: 12
+                Text {
+                    text: "OpenGP isn't in this folder"
+                    color: Theme.chalk
+                    font.pixelSize: Theme.heading
+                    font.weight: Font.ExtraBold
+                }
+                Text {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    color: Theme.dim
+                    font.pixelSize: Theme.lead
+                    lineHeight: 1.25
+                    text: "Keep OpenGP (this program) in the folder it was unpacked to, next to its sdk folder. "
+                          + "The launcher looked in " + Launcher.homePath + ".\n\n" + Launcher.homeError
+                }
+            }
+        }
+    }
+
+    SettingsDialog { id: settings }
+    Toast { id: toast }
+
+    FileDialog {
+        id: imageDialog
+        title: "Add a disc image"
+        nameFilters: ["Disc images (*.iso *.gcm)", "All files (*)"]
+        onAccepted: Launcher.addImage(selectedFile)
+    }
+}

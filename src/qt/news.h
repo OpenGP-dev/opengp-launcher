@@ -1,0 +1,67 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// The news feed for QML: downloaded (news.toml, see docs/news.md and
+// core/news.h) when the launcher starts and every half hour, kept in
+// user/news.toml for when the feed cannot be reached. With no news at all, the
+// newest section of OpenGP's CHANGELOG.md stands in.
+#pragma once
+
+#include <QNetworkAccessManager>
+#include <QObject>
+#include <QTimer>
+#include <QVariantList>
+#include <QtQmlIntegration>
+#include <vector>
+
+#include "core/news.h"
+
+class QQmlEngine;
+class QJSEngine;
+
+namespace launcher {
+
+class News : public QObject {
+  Q_OBJECT
+  QML_ELEMENT
+  QML_SINGLETON
+  Q_PROPERTY(QVariantList items READ items NOTIFY changed)  // [{id, date, title, tag, link, body, pinned, unread}]
+  Q_PROPERTY(int unread READ unread NOTIFY changed)
+  Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY changed)
+  Q_PROPERTY(bool offline READ offline NOTIFY changed)       // showing the copy kept from before
+  Q_PROPERTY(QString whatsNew READ whatsNew NOTIFY changed)  // the changelog's newest section (Markdown), when there is no news
+  Q_PROPERTY(QString whatsNewTitle READ whatsNewTitle NOTIFY changed)
+
+ public:
+  explicit News(QObject* parent = nullptr);
+  static News* create(QQmlEngine*, QJSEngine*);
+
+  QVariantList items() const;
+  int unread() const;
+  bool enabled() const;
+  void setEnabled(bool enabled);
+  bool offline() const { return offline_; }
+  QString whatsNew() const { return whats_new_; }
+  QString whatsNewTitle() const { return whats_new_title_; }
+
+  Q_INVOKABLE void refresh();
+  Q_INVOKABLE void markAllSeen();
+
+ signals:
+  void changed();
+
+ private:
+  QString url() const;
+  QString cache_path() const;
+  bool show(const QByteArray& text);
+  void read_changelog();
+
+  static inline News* instance_ = nullptr;
+  QNetworkAccessManager network_;
+  QTimer timer_;
+  std::vector<NewsItem> items_;
+  bool offline_ = false;
+  QByteArray etag_;
+  QString whats_new_, whats_new_title_;
+};
+
+}  // namespace launcher
