@@ -1,6 +1,6 @@
 # OpenGP Launcher
 
-The launcher for [OpenGP](https://github.com/OfficiallySp/OpenGP), the native PC port of Mario Kart
+The launcher for [OpenGP](https://github.com/OpenGP-dev/OpenGP), the native PC port of Mario Kart
 Arcade GP 2 and GP 1. In one window:
 
 - **Home**: each game with the next thing to do (add its disc image, install or build it, play it),
