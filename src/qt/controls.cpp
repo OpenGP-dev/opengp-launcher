@@ -35,7 +35,11 @@ void Controls::start() {
   input_ = std::make_unique<input::HostInput>();
   std::string error;
   error_.clear();
-  if (!input_->load(path_.toStdString(), &error)) error_ = QString::fromStdString(error);
+  // A failure, or warnings (a binding OpenGP did not understand, a file it
+  // set aside as controls.toml.bad): shown either way.
+  input_->load(path_.toStdString(), &error);
+  if (!error.empty()) error_ = QString::fromStdString(error);
+  error.clear();
   if (!input_->init(&error)) error_ = QStringLiteral("No controllers: ") + QString::fromStdString(error);
   timer_.start();
   emit changed();

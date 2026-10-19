@@ -4,8 +4,9 @@
 // their settings and controls, add the disc images and build the games, and
 // look after the saves.
 //
-//   OpenGP [--home DIR] [--user-dir DIR] [--game ID] [--play]
+//   OpenGP [--home DIR] [--user-dir DIR] [--game ID] [--play] [IMAGE...]
 //     --play starts the game (the last one chosen, or --game) once it is found ready
+//     IMAGE: disc images to add (a file dropped on OpenGP)
 //   OpenGP --version
 //   OpenGP --smoke-test                 load the interface and quit (0 if it loaded without warnings)
 //   OpenGP --screenshot-ui FILE [--view VIEW]   save a picture of the window and quit
@@ -13,6 +14,9 @@
 
 #include <QCommandLineParser>
 #include <QDir>
+#include <QFileInfo>
+#include <QRegularExpression>
+#include <QUrl>
 #include <QFont>
 #include <QFontDatabase>
 #include <QGuiApplication>
@@ -26,6 +30,7 @@
 #include <cstring>
 
 #include "core/home.h"
+#include "installer/installer.h"
 #include "qt/controls.h"
 #include "qt/game_settings.h"
 #include "qt/launcher.h"
@@ -53,7 +58,32 @@ void attach_console() {
 #endif
 }
 
-fs::path path_of(const QString& s) { return fs::path(s.toStdU16String()); }
+// In the system's style (backslashes on Windows), as paths are shown to the player.
+fs::path path_of(const QString& s) { return fs::path(QDir::toNativeSeparators(s).toStdU16String()); }
+
+// Where the launcher runs from, if that is the problem: Windows' Explorer runs
+// a program opened inside a zip from a temporary folder named after the zip,
+// and macOS runs an app downloaded from the internet, until it is moved, from
+// a temporary read-only copy (App Translocation). A heading and what to do,
+// or nothing.
+std::pair<QString, QString> where_problem(const QString& exe_dir) {
+  const QString dir = QDir::cleanPath(exe_dir);
+  const QString temp = QDir::cleanPath(QDir::tempPath());
+  static const QRegularExpression zip(QStringLiteral("(\\.zip|/7zO[0-9A-Fa-f]+)(/|$)"),
+                                      QRegularExpression::CaseInsensitiveOption);
+  if (dir.startsWith(temp + QLatin1Char('/'), Qt::CaseInsensitive) && zip.match(dir).hasMatch())
+    return {QStringLiteral("Unpack OpenGP first"),
+            QStringLiteral("OpenGP is running from inside its zip file (from a temporary folder, ") + QDir::toNativeSeparators(dir) +
+                QStringLiteral("). Unpack the whole archive first: right-click the zip and choose Extract All. Then "
+                               "run OpenGP from the folder it makes.")};
+  if (dir.contains(QLatin1String("/AppTranslocation/")))
+    return {QStringLiteral("Move OpenGP first"),
+            QStringLiteral("macOS is running OpenGP from a temporary read-only copy, because it came from the "
+                           "internet and hasn't been moved yet. In Finder, move the whole OpenGP folder somewhere else "
+                           "(your Documents folder, for example), then open OpenGP from there. Or, in Terminal, run "
+                           "xattr -dr com.apple.quarantine on the OpenGP folder.")};
+  return {};
+}
 
 }  // namespace
 
@@ -66,6 +96,9 @@ int main(int argc, char** argv) {
     }
 
   QGuiApplication app(argc, argv);
+  // The games this launcher starts word their messages for its players (no
+  // command line to point at).
+  qputenv("OPENGP_LAUNCHER", "1");
   QGuiApplication::setApplicationName(QStringLiteral("OpenGP"));
   QGuiApplication::setApplicationVersion(QStringLiteral(LAUNCHER_VERSION));
   QQuickStyle::setStyle(QStringLiteral("Basic"));
@@ -96,6 +129,8 @@ int main(int argc, char** argv) {
                                     QStringLiteral("view"));
   const QCommandLineOption play_opt(QStringLiteral("play"), QStringLiteral("Start the game at once (for shortcuts)."));
   args.addOptions({home_opt, user_opt, smoke_opt, shot_opt, game_opt, view_opt, play_opt});
+  args.addPositionalArgument(QStringLiteral("image"), QStringLiteral("Disc images to add (dropped on OpenGP)."),
+                             QStringLiteral("[image...]"));
   args.process(app);
   if (args.isSet(smoke_opt) || args.isSet(shot_opt)) attach_console();
 
@@ -106,17 +141,30 @@ int main(int argc, char** argv) {
   const fs::path user_dir = args.isSet(user_opt) ? path_of(QDir(args.value(user_opt)).absolutePath()) : fs::path();
   Home home;
   std::string error;
-  QString home_error;
-  if (!open_home(dir, user_dir, &home, &error)) {
+  QString home_error, home_error_title;
+  const auto [where_title, where_text] =
+      args.isSet(home_opt) ? std::pair<QString, QString>() : where_problem(QCoreApplication::applicationDirPath());
+  if (!where_title.isEmpty()) {
+    home_error_title = where_title;
+    home_error = where_text;
+    home.dir = dir;
+    home.user_dir = user_dir.empty() ? dir / "user" : user_dir;
+  } else if (!open_home(dir, user_dir, &home, &error)) {
     home_error = QString::fromStdString(error);
     home.dir = dir;
     home.user_dir = user_dir.empty() ? dir / "user" : user_dir;
+  } else if (home.package && !installer::check_writable(home.dir, &error)) {
+    // The games, their compiler, the builds and the saves all go in the
+    // package folder (Program Files, for one, is not writable).
+    home_error_title = QStringLiteral("OpenGP can't write to its folder");
+    home_error = QString::fromStdString(error);
   }
   std::error_code ec;
   fs::create_directories(home.user_dir, ec);
 
   const QString prefs_path = QString::fromStdString(utf8(home.user_dir / "launcher.toml"));
   Launcher launcher(std::move(home), home_error, prefs_path);
+  launcher.setHomeErrorTitle(home_error_title);
   GameSettings settings(QString::fromStdString(utf8(launcher.home().user_dir / "settings.toml")));
   Controls controls(QString::fromStdString(utf8(launcher.home().user_dir / "controls.toml")));
   if (args.isSet(game_opt))
@@ -169,8 +217,33 @@ int main(int argc, char** argv) {
                                {QStringLiteral("width"), launcher.prefs().window_width},
                                {QStringLiteral("height"), launcher.prefs().window_height}});
   engine.loadFromModule("OpenGP.Launcher", "Main");
-  if (engine.rootObjects().isEmpty()) return 1;
+  if (engine.rootObjects().isEmpty()) {
+    // A windowed program: without this, the player would see nothing at all.
+    const QString text = QStringLiteral("OpenGP's window could not be loaded.\n\n") + warnings.join(QLatin1Char('\n'));
+#ifdef _WIN32
+    MessageBoxW(nullptr, reinterpret_cast<const wchar_t*>(text.utf16()), L"OpenGP", MB_ICONERROR | MB_OK);
+#else
+    std::fprintf(stderr, "%s\n", qPrintable(text));
+#endif
+    return 1;
+  }
   auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
+
+  // Problems with the games' settings or controls files: the launcher reads
+  // them first (and sets an unreadable controls.toml aside), so it says so,
+  // not only on its Settings and Controls pages.
+  if (launcher.homeError().isEmpty()) {
+    QStringList problems;
+    for (const QString& p : {settings.error(), settings.warning(), controls.error()})
+      if (!p.isEmpty()) problems << p;
+    if (!problems.isEmpty()) emit launcher.message(problems.join(QStringLiteral("\n\n")), true);
+  }
+
+  // Images dropped on OpenGP (its command line): added, as the installer adds
+  // an image dropped on it.
+  if (launcher.homeError().isEmpty())
+    for (const QString& image : args.positionalArguments())
+      launcher.addImage(QUrl::fromLocalFile(QFileInfo(image).absoluteFilePath()));
 
   if (args.isSet(smoke_opt)) {
     QTimer::singleShot(1000, &app, [&] { app.exit(warnings.isEmpty() ? 0 : 1); });

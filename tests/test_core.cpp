@@ -6,6 +6,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest.h>
 
+#include <chrono>
 #include <fstream>
 #include <sstream>
 
@@ -13,13 +14,16 @@
 
 #include "core/art.h"
 #include "core/dump_check.h"
+#include "core/game_end.h"
 #include "core/game_process.h"
 #include "core/home.h"
+#include "core/library.h"
 #include "core/news.h"
 #include "core/prefs.h"
 #include "core/scancodes.h"
 #include "core/source_build.h"
 #include "core/user_data.h"
+#include "app/paths.h"
 #include "disc/sha1.h"
 
 using namespace launcher;
@@ -85,7 +89,8 @@ TEST_CASE("an installed package and a source tree are found") {
     // A package: sdk/package.toml lists the games.
     const fs::path pkg = dir.path / "pkg";
     write(pkg / "sdk" / "package.toml", "version = \"9.9.9\"\ngames = [\"mkgp2\"]\n[build]\nexecutable_suffix = \"" +
-                                            std::string(kExe) + "\"\n");
+                                            std::string(kExe) +
+                                            "\"\ncommon_sources = [\"main.cpp\"]\ngame_sources = [\"patches.cpp\"]\n");
     write(pkg / "sdk" / "games" / "mkgp2" / "game.toml", kGameToml);
     Home home;
     std::string error;
@@ -424,4 +429,78 @@ TEST_CASE("disc images are checked against the known good dumps") {
   REQUIRE(image_stamp(image, &size, &modified));
   CHECK(size == static_cast<std::int64_t>(kGpSize + 16));
   CHECK_FALSE(image_stamp(utf8(dir.path / "none.iso"), &size, &modified));
+}
+
+TEST_CASE("the player is told why a game stopped, and about its reports") {
+  TempDir dir("opengp_launcher_end");
+  const fs::path user = dir.path / "user";
+  const fs::path log = user / "logs" / "GGPE02.log";
+  const auto started = fs::file_time_type::clock::now();
+
+  // A clean exit says nothing.
+  write(log, "[opengp] video: vulkan\n[opengp] quit from the menu\n");
+  GameEnd end = game_end("GP 2", 0, false, log, user, started);
+  CHECK_FALSE(end.error);
+  CHECK(end.text.empty());
+
+  // Why it could not start: the last line that isn't a report's detail.
+  write(log, "[opengp] booting\n  guest: draws 0.0 s\nNo disc image of GP 2 (GGPE02) found. Add it.\n");
+  end = game_end("GP 2", 1, false, log, user, started);
+  CHECK(end.error);
+  CHECK(end.text == "GP 2 could not run. No disc image of GP 2 (GGPE02) found. Add it.");
+
+  // A crash (OpenGP's exit code 3) names the report written during the run.
+  write(user / "crash-report.txt", "report");
+  write(log, "[crash] report written to somewhere\n");
+  end = game_end("GP 2", kCrashExitCode, false, log, user, started);
+  CHECK(end.error);
+  CHECK(end.text.find("GP 2 crashed. What went wrong is in ") == 0);
+  CHECK(end.text.find("crash-report.txt") != std::string::npos);
+  // ... but not one from an earlier run.
+  fs::last_write_time(user / "crash-report.txt", started - std::chrono::hours(1));
+  CHECK(game_end("GP 2", kCrashExitCode, false, log, user, started).text == "GP 2 crashed.");
+
+  // A hang report from this run, and a notice the game could no longer show.
+  write(user / "hang-report.txt", "hang");
+  write(log, "[opengp] something\n[unseen] The settings could not be saved: disk full\n");
+  end = game_end("GP 2", 0, false, log, user, started);
+  CHECK(end.error);
+  CHECK(end.text.find("GP 2 stopped responding for a while.") == 0);
+  CHECK(end.text.find("\n\nThe settings could not be saved: disk full") != std::string::npos);
+
+  CHECK(last_reason("why\n[opengp] status: 10 frames\n  guest: x\n[crash] y\n") == "why");
+}
+
+TEST_CASE("the player is told why a disc image isn't used") {
+  TempDir dir("opengp_launcher_images");
+  const fs::path pkg = dir.path / "pkg";
+  write(pkg / "sdk" / "package.toml", "version = \"9.9.9\"\ngames = [\"mkgp2\"]\n[build]\nexecutable_suffix = \"" +
+                                          std::string(kExe) +
+                                          "\"\ncommon_sources = [\"main.cpp\"]\ngame_sources = [\"patches.cpp\"]\n");
+  write(pkg / "sdk" / "games" / "mkgp2" / "game.toml", kGameToml);
+  write(pkg / "ISO" / "game.rvz", "compressed");
+  write(pkg / "ISO" / "junk.iso", "not a disc");
+  Home home;
+  std::string error;
+  REQUIRE_MESSAGE(open_home(pkg, {}, &home, &error), error);
+
+  // The image it was installed from has gone.
+  REQUIRE(app::remember_image(home.user_dir, "GGPE02", utf8(dir.path / "moved.iso"), &error));
+  std::vector<std::string> skipped;
+  const std::vector<GameStatus> status = check_games(home, &skipped);
+  REQUIRE(status.size() == 1);
+  CHECK(status[0].state == GameState::NoImage);
+  CHECK(status[0].note.find("no longer at") != std::string::npos);
+  REQUIRE(skipped.size() == 2);
+  std::string all;
+  for (const std::string& s : skipped) all += s + "\n";
+  CHECK(all.find("game.rvz: a compressed image; convert it to .iso with Dolphin") != std::string::npos);
+  CHECK(all.find("junk.iso: not a GameCube or Triforce disc image") != std::string::npos);
+
+  // Chosen with Add disc image: the same reasons.
+  std::string id;
+  CHECK_FALSE(add_image(home, utf8(pkg / "ISO" / "game.rvz"), &id, &error));
+  CHECK(error.find("A compressed image; convert it to .iso with Dolphin") == 0);
+  CHECK_FALSE(add_image(home, utf8(dir.path / "nothere.iso"), &id, &error));
+  CHECK(error == "No such file.");
 }

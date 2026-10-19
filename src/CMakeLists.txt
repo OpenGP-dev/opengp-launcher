@@ -2,6 +2,7 @@
 add_library(launcher_core STATIC
   core/art.cpp
   core/dump_check.cpp
+  core/game_end.cpp
   core/game_process.cpp
   core/home.cpp
   core/library.cpp

@@ -38,6 +38,10 @@ class Launcher : public QObject {
   Q_PROPERTY(QString homePath READ homePath CONSTANT)
   Q_PROPERTY(QString userPath READ userPath CONSTANT)
   Q_PROPERTY(QString homeError READ homeError CONSTANT)
+  // The heading for homeError ("" for the usual "OpenGP isn't in this folder").
+  Q_PROPERTY(QString homeErrorTitle READ homeErrorTitle CONSTANT)
+  // Files in the ISO folder that are not usable images, and why.
+  Q_PROPERTY(QStringList skippedImages READ skippedImages NOTIFY checkingChanged)
   Q_PROPERTY(QString launcherVersion READ launcherVersion CONSTANT)
   Q_PROPERTY(QString openGPVersion READ openGPVersion CONSTANT)
   Q_PROPERTY(bool checking READ checking NOTIFY checkingChanged)
@@ -80,6 +84,9 @@ class Launcher : public QObject {
   QString homePath() const;
   QString userPath() const;
   QString homeError() const { return home_error_; }
+  QString homeErrorTitle() const { return home_error_title_; }
+  void setHomeErrorTitle(const QString& title) { home_error_title_ = title; }
+  QStringList skippedImages() const { return skipped_images_; }
   QString launcherVersion() const;
   QString openGPVersion() const;
   bool checking() const { return checking_; }
@@ -118,10 +125,11 @@ class Launcher : public QObject {
   void gameStarting(const QString& id);  // before it starts: let go of the controllers
   void gameEnded(const QString& id);     // settings may have changed
   void minimizeRequested();
+  void raiseRequested();  // something went wrong in a game: show the window
   void quitRequested();
 
  private:
-  void apply_statuses(int generation, const std::vector<GameStatus>& statuses);
+  void apply_statuses(int generation, const std::vector<GameStatus>& statuses, const QStringList& skipped);
   void make_missing_art();
   void game_ended(const QString& id, int exit_code, bool crashed);
   void finish_build(bool ok, const QString& error);
@@ -141,6 +149,9 @@ class Launcher : public QObject {
   static inline Launcher* instance_ = nullptr;
   Home home_;
   QString home_error_, prefs_path_;
+  QString home_error_title_;
+  QStringList skipped_images_;
+  fs::file_time_type started_{};  // when the running game was started
   Prefs prefs_;
   GameList games_;
   int current_ = 0;

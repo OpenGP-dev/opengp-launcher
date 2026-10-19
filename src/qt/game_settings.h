@@ -23,6 +23,9 @@ class GameSettings : public QObject {
   QML_SINGLETON
   Q_PROPERTY(bool locked READ locked NOTIFY lockedChanged)
   Q_PROPERTY(QString error READ error NOTIFY changed)
+  // Values in settings.toml OpenGP did not understand (they keep their
+  // settings), or what became of an unreadable file: shown, but no reason to stop.
+  Q_PROPERTY(QString warning READ warning NOTIFY changed)
   // [video]
   Q_PROPERTY(bool fullscreen READ fullscreen WRITE setFullscreen NOTIFY changed)
   Q_PROPERTY(int windowWidth READ windowWidth WRITE setWindowWidth NOTIFY changed)
@@ -57,6 +60,7 @@ class GameSettings : public QObject {
   bool locked() const { return locked_; }
   void set_locked(bool locked);
   QString error() const { return error_; }
+  QString warning() const { return warning_; }
 
   bool fullscreen() const { return s_.fullscreen; }
   int windowWidth() const { return s_.window_width; }
@@ -115,6 +119,7 @@ class GameSettings : public QObject {
   QString path_;
   app::Settings s_;
   QString error_;
+  QString warning_;
   bool locked_ = false;
 };
 

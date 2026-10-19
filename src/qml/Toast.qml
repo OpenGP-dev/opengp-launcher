@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Layouts
 
 // A short message at the bottom right: what just happened, or what went wrong.
 Popup {
@@ -11,8 +12,14 @@ Popup {
         message = text
         error = isError
         open()
-        hide.interval = isError ? 9000 : 4500
-        hide.restart()
+        // An error stays until the player clicks it away: it may be the only
+        // place they learn why a game didn't start.
+        if (isError) {
+            hide.stop()
+        } else {
+            hide.interval = 4500
+            hide.restart()
+        }
     }
 
     parent: Overlay.overlay
@@ -39,16 +46,39 @@ Popup {
             color: toast.error ? Theme.red : Theme.blue
         }
     }
-    contentItem: Text {
-        text: toast.message
-        color: Theme.chalk
-        font.family: Theme.family
-        font.pixelSize: Theme.body
-        wrapMode: Text.WordWrap
-        lineHeight: 1.2
-        MouseArea {
-            anchors.fill: parent
-            onClicked: toast.close()
+    // Long messages (a compiler's error) scroll instead of running off the
+    // window, and can be selected and copied; the cross closes it.
+    contentItem: RowLayout {
+        spacing: 10
+        ScrollView {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.min(body.implicitHeight, toast.parent ? toast.parent.height * 0.6 : 400)
+            clip: true
+            TextArea {
+                id: body
+                text: toast.message
+                readOnly: true
+                selectByMouse: true
+                wrapMode: Text.WordWrap
+                color: Theme.chalk
+                selectionColor: Theme.blue
+                font.family: Theme.family
+                font.pixelSize: Theme.body
+                background: null
+                padding: 0
+            }
+        }
+        Text {
+            Layout.alignment: Qt.AlignTop
+            text: "\u2715"
+            color: Theme.dim
+            font.pixelSize: Theme.body
+            MouseArea {
+                anchors.fill: parent
+                anchors.margins: -8
+                cursorShape: Qt.PointingHandCursor
+                onClicked: toast.close()
+            }
         }
     }
     Timer {

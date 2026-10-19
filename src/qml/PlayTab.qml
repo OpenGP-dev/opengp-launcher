@@ -78,6 +78,23 @@ Item {
                     wrapMode: Text.WordWrap
                     lineHeight: 1.2
                 }
+                // No image: where the old one was, and why files in the ISO
+                // folder were passed over (a compressed image, another region...).
+                Text {
+                    Layout.fillWidth: true
+                    visible: !tab.game.image && text.length > 0
+                    text: {
+                        let lines = []
+                        if (tab.game.imageNote) lines.push(tab.game.imageNote)
+                        for (const line of Launcher.skippedImages) lines.push(line)
+                        if (lines.length === 0) return ""
+                        return lines.join("\n")
+                    }
+                    color: Theme.dim
+                    font.pixelSize: Theme.small
+                    wrapMode: Text.WordWrap
+                    lineHeight: 1.2
+                }
                 Flow {
                     Layout.fillWidth: true
                     spacing: 8
@@ -85,6 +102,11 @@ Item {
                         text: tab.game.image ? "Change" : "Add disc image"
                         enabled: Launcher.runningId.length === 0 && Launcher.buildingId.length === 0
                         onClicked: tab.addImage()
+                    }
+                    PillButton {
+                        text: "Open ISO folder"
+                        visible: !tab.game.image
+                        onClicked: Launcher.openFolder("iso")
                     }
                     PillButton {
                         text: "Show file"

@@ -25,9 +25,11 @@ bool fail(std::string* error, const std::string& msg) {
   return false;
 }
 
-// Folders in user/ a backup leaves out.
+// What in user/ a backup leaves out (and a restore leaves alone): these
+// folders, and the lock file each running game holds (.lock-<game ID>).
 bool left_out(const fs::path& name) {
-  return name == "backups" || name == "logs" || name == "art" || name == "screenshots";
+  return name == "backups" || name == "logs" || name == "art" || name == "screenshots" ||
+         name.u8string().rfind(u8".lock-", 0) == 0;
 }
 
 std::string now_text() {
@@ -68,6 +70,8 @@ bool copy_user_files(const fs::path& from, const fs::path& to, std::string* erro
 
 bool valid_card_name(const std::string& name) {
   if (name.empty() || name.size() > 64 || name.front() == ' ' || name.back() == ' ' || name.back() == '.') return false;
+  // The games hold no card whose name OpenGP refuses (a leading dot, CON, COM1...).
+  if (!triforce::CardFolder::valid_name(name)) return false;
   return std::none_of(name.begin(), name.end(), [](char c) {
     return static_cast<unsigned char>(c) < 32 || std::string_view("\\/:*?\"<>|").find(c) != std::string_view::npos;
   });

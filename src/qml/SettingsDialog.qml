@@ -128,7 +128,7 @@ Popup {
                 Layout.leftMargin: 36
                 Layout.rightMargin: 36
                 Layout.topMargin: 14
-                visible: dialog.locked || GameSettings.error.length > 0
+                visible: dialog.locked || GameSettings.error.length > 0 || GameSettings.warning.length > 0
                 implicitHeight: notice.implicitHeight + 24
                 radius: 10
                 color: Qt.rgba(0.898, 0.141, 0.231, 0.14)
@@ -146,10 +146,12 @@ Popup {
                         font.pixelSize: Theme.body
                         text: dialog.locked
                               ? "A game is running. Change its settings in its own menu (Esc) until you close it."
-                              : "The settings file can't be read, so the games are using their defaults: " + GameSettings.error
+                              : GameSettings.error.length > 0
+                                ? "The settings file can't be read, so the games are using their defaults: " + GameSettings.error
+                                : GameSettings.warning
                     }
                     PillButton {
-                        visible: !dialog.locked
+                        visible: !dialog.locked && GameSettings.error.length > 0
                         text: "Reset to defaults"
                         onClicked: GameSettings.resetToDefaults()
                     }
