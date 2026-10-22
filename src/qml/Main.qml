@@ -207,8 +207,9 @@ ApplicationWindow {
                     // a folder it can't write to: the reason says which.
                     text: Launcher.homeErrorTitle ? Launcher.homeError
                           : "Keep OpenGP (this program) in the folder it was unpacked to, next to its sdk folder. "
-                            + "If you opened it from inside its zip file, unpack the whole archive first (right-click "
-                            + "the zip and choose Extract All). The launcher looked in " + Launcher.homePath + ".\n\n"
+                            + "If you opened it from inside its zip file, unpack the whole archive first"
+                            + (Qt.platform.os === "windows" ? " (right-click the zip and choose Extract All)" : "")
+                            + ". The launcher looked in " + Launcher.homePath + ".\n\n"
                             + Launcher.homeError
                 }
             }

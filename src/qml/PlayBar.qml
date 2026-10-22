@@ -109,7 +109,9 @@ Rectangle {
                 text: bar.statusText()
                 color: Theme.dim
                 font.pixelSize: Theme.body
-                elide: Text.ElideMiddle
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
             }
             ProgressBar {
                 id: progress
