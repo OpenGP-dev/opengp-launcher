@@ -80,8 +80,11 @@ target_compile_definitions(opengp_launcher PRIVATE
   # The CMake and Ninja this was built with, to build the games of a source tree.
   LAUNCHER_CMAKE="${CMAKE_COMMAND}"
   LAUNCHER_MAKE_PROGRAM="${CMAKE_MAKE_PROGRAM}")
+# Info.plist.in is Qt's template plus the camera's usage description (macOS
+# checks the launcher's, as the games it starts open the webcam).
 set_target_properties(opengp_launcher PROPERTIES
   OUTPUT_NAME OpenGP
+  MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
   MACOSX_BUNDLE_BUNDLE_NAME OpenGP
   MACOSX_BUNDLE_GUI_IDENTIFIER dev.opengp.launcher
   MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
