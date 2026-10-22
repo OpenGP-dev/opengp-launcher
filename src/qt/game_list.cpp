@@ -35,6 +35,7 @@ QVariant GameList::data(const QModelIndex& index, int role) const {
     case DumpNameRole: return e.dump_name;
     case DumpNoteRole: return e.dump_note;
     case ImageErrorRole: return e.image_error;
+    case ImageNoteRole: return e.image_note;
     default: return {};
   }
 }
@@ -44,7 +45,7 @@ QHash<int, QByteArray> GameList::roleNames() const {
           {StateRole, "gameState"}, {ImageRole, "image"},  {ExeRole, "exe"},
           {LogoRole, "logo"},   {TileRole, "tile"},    {HeroesRole, "heroes"},
           {DumpCheckRole, "dumpCheck"}, {DumpNameRole, "dumpName"}, {DumpNoteRole, "dumpNote"},
-          {ImageErrorRole, "imageError"}};
+          {ImageErrorRole, "imageError"}, {ImageNoteRole, "imageNote"}};
 }
 
 QVariantMap GameList::get(int row) const {

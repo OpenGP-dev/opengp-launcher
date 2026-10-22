@@ -2,6 +2,10 @@
 
 #include "qt/game_settings.h"
 
+#include <filesystem>
+
+#include "os/atomic_file.h"
+
 #include <QQmlEngine>
 #include <algorithm>
 
@@ -37,10 +41,13 @@ void GameSettings::reload() {
   app::Settings s;
   std::string error;
   error_.clear();
+  warning_.clear();
   if (!app::load_settings(path_.toStdString(), &s, &error)) {
     // The games run on their defaults then; say so, and leave the file be.
     error_ = QString::fromStdString(error);
     s = app::Settings{};
+  } else if (!error.empty()) {
+    warning_ = QString::fromStdString(error);
   }
   s_ = s;
   emit changed();
@@ -48,9 +55,19 @@ void GameSettings::reload() {
 
 void GameSettings::resetToDefaults() {
   if (locked_) return;
+  // An unreadable file is kept as settings.toml.bad, as the games keep it,
+  // so the player can still look at what was in it.
+  QString kept;
+  if (!error_.isEmpty()) {
+    std::error_code ec;
+    const std::string path = path_.toStdString();
+    std::filesystem::rename(os::utf8_path(path), os::utf8_path(path + ".bad"), ec);
+    if (!ec) kept = QStringLiteral("The old file was kept as settings.toml.bad.");
+  }
   s_ = app::Settings{};
   std::string error;
   error_ = app::save_settings(path_.toStdString(), s_, &error) ? QString() : QString::fromStdString(error);
+  warning_ = error_.isEmpty() ? kept : QString();
   emit changed();
 }
 

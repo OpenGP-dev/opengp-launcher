@@ -17,6 +17,7 @@
 #include <unistd.h>
 #endif
 
+#include "core/game_end.h"
 #include "core/game_process.h"
 #include "core/source_build.h"
 #include "core/user_data.h"
@@ -41,17 +42,6 @@ void post(QObject* target, Fn fn) {
 }
 
 // The last line a game printed, for when it stops with an error.
-QString last_line(const fs::path& log) {
-  QFile f(qs(log));
-  if (!f.open(QIODevice::ReadOnly)) return {};
-  const QStringList lines = QString::fromUtf8(f.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
-  for (auto it = lines.rbegin(); it != lines.rend(); ++it) {
-    const QString line = it->trimmed();
-    if (!line.isEmpty() && !line.startsWith(QLatin1String("[opengp] status"))) return line;
-  }
-  return {};
-}
-
 // The CMake to build a source tree's games with: the one the launcher was
 // built with, else one on PATH.
 QString cmake_program() {
@@ -181,20 +171,25 @@ void Launcher::refresh() {
   emit checkingChanged();
   const int generation = ++generation_;
   check_thread_ = std::thread([this, generation, home = home_] {
-    auto statuses = check_games(home);
-    QMetaObject::invokeMethod(this, [this, generation, statuses = std::move(statuses)] {
-      apply_statuses(generation, statuses);
+    std::vector<std::string> skipped;
+    auto statuses = check_games(home, &skipped);
+    QStringList skipped_lines;
+    for (const std::string& line : skipped) skipped_lines << qs(line);
+    QMetaObject::invokeMethod(this, [this, generation, statuses = std::move(statuses), skipped_lines] {
+      apply_statuses(generation, statuses, skipped_lines);
     }, Qt::QueuedConnection);
   });
 }
 
-void Launcher::apply_statuses(int generation, const std::vector<GameStatus>& statuses) {
+void Launcher::apply_statuses(int generation, const std::vector<GameStatus>& statuses, const QStringList& skipped) {
   checking_ = false;
   if (generation == generation_) {
+    skipped_images_ = skipped;
     for (int i = 0; i < games_.rowCount() && i < static_cast<int>(statuses.size()); ++i) {
       GameList::Entry e = games_.at(i);
       e.state = static_cast<int>(statuses[i].state);
       e.image = qs(statuses[i].image);
+      e.image_note = qs(statuses[i].note);
       const GameArt art = existing_art(qs(home_.user_dir / "art" / e.id.toStdString()), e.image);
       e.logo = art.logo, e.tile = art.tile, e.heroes = art.heroes;
       const ImageCheck* check = current_check(e.id, e.image);
@@ -256,11 +251,14 @@ void Launcher::play(int index, bool testMenu, bool gameLog) {
   const GameList::Entry& e = games_.at(index);
   const Game* game = home_.game(e.id.toStdString());
   if (!game) return;
-  std::vector<std::string> args = {"--user-dir", utf8(home_.user_dir)};
+  // --status 0: no status reports in the log, so that its last line says why
+  // a game stopped.
+  std::vector<std::string> args = {"--user-dir", utf8(home_.user_dir), "--status", "0"};
   if (testMenu) args.push_back("--test-menu");
   if (gameLog) args.push_back("--game-log");
 
   emit gameStarting(e.id);
+  started_ = fs::file_time_type::clock::now();
   const fs::path log = next_log(home_.user_dir, e.id.toStdString());
   auto process = std::make_shared<GameProcess>();
   std::string error;
@@ -286,11 +284,13 @@ void Launcher::game_ended(const QString& id, int exit_code, bool crashed) {
   emit gameEnded(id);
   const int row = row_of(id);
   const QString title = row >= 0 ? games_.at(row).title : id;
-  if (crashed || exit_code != 0) {
-    const QString why = last_line(log_path(home_.user_dir, id.toStdString()));
-    emit message(title + (crashed ? QStringLiteral(" stopped unexpectedly.") : QStringLiteral(" could not run.")) +
-                     (why.isEmpty() ? QString() : QStringLiteral(" ") + why),
-                 true);
+  // Why it could not start, a crash or a hang (and where the report is), and
+  // what the game could no longer show in its window.
+  const GameEnd end =
+      game_end(title.toStdString(), exit_code, crashed, log_path(home_.user_dir, id.toStdString()), home_.user_dir, started_);
+  if (end.error) {
+    emit raiseRequested();  // with "On launch: Minimize", the launcher is out of sight
+    emit message(qs(end.text), true);
   }
 }
 
@@ -378,6 +378,19 @@ void Launcher::finish_build(bool ok, const QString& error) {
   cmake_log_ = nullptr;
   const int row = row_of(building_id_);
   const QString title = row >= 0 ? games_.at(row).title : building_id_;
+  // A failed install's lines and error, kept for the player (and a bug
+  // report): the toast can show only so much.
+  QString kept;
+  if (!ok && error != QLatin1String("cancelled") && home_.package && !building_id_.isEmpty()) {
+    const fs::path dir = home_.user_dir / "logs";
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+    QFile f(qs(dir / ("install-" + building_id_.toStdString() + ".log")));
+    if (f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+      f.write((build_log_.join(QLatin1Char('\n')) + QStringLiteral("\n\n") + error + QLatin1Char('\n')).toUtf8());
+      kept = QStringLiteral("\n\nThe install's output is in ") + QDir::toNativeSeparators(f.fileName()) + QLatin1Char('.');
+    }
+  }
   building_id_.clear();
   progress_ = -1;
   progress_text_.clear();
@@ -385,7 +398,7 @@ void Launcher::finish_build(bool ok, const QString& error) {
   emit progressChanged();
   if (ok) emit message(title + QStringLiteral(" is ready to play."), false);
   else if (error == QLatin1String("cancelled")) emit message(QStringLiteral("Stopped building ") + title + QStringLiteral("."), false);
-  else emit message(QStringLiteral("Could not build ") + title + QStringLiteral(": ") + error, true);
+  else emit message(QStringLiteral("Could not build ") + title + QStringLiteral(": ") + error + kept, true);
   refresh();
 }
 
@@ -614,6 +627,7 @@ void Launcher::openFolder(const QString& which) {
   if (which == QLatin1String("home")) dir = home_.dir;
   else if (which == QLatin1String("screenshots")) dir /= "screenshots";
   else if (which == QLatin1String("logs")) dir /= "logs";
+  else if (which == QLatin1String("iso")) dir = home_.dir / "ISO";
   else if (which == QLatin1String("backups")) dir /= "backups";
   else if (which == QLatin1String("cards") && games_.rowCount()) dir = dir / "cards" / currentId().toStdString();
   std::error_code ec;

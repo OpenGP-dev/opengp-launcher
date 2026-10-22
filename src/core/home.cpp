@@ -3,6 +3,7 @@
 #include "core/home.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <fstream>
 
 #define TOML_EXCEPTIONS 0
@@ -112,6 +113,31 @@ bool open_home(const fs::path& dir, const fs::path& user_dir, Home* home, std::s
   }
   *home = std::move(h);
   return true;
+}
+
+bool check_writable(const fs::path& dir, std::string* error) {
+  const fs::path test = dir / "build" / "write-test";
+  std::error_code ec;
+  fs::create_directories(test.parent_path(), ec);
+  if (!ec) {
+    errno = 0;
+    std::ofstream f(test, std::ios::binary);
+    if (f && (f << "ok") && (f.close(), !f.fail())) {
+      fs::remove(test, ec);
+      return true;
+    }
+    ec = std::error_code(errno ? errno : EACCES, std::generic_category());
+  }
+  // The folder in the system's style; the reason without a full stop.
+  fs::path shown = dir.lexically_normal();
+  shown.make_preferred();
+  std::string why = ec.message();
+  while (!why.empty() && (why.back() == '.' || why.back() == ' ')) why.pop_back();
+  if (error)
+    *error = "OpenGP cannot write to its folder, " + utf8(shown) + " (" + why +
+             "). Move the OpenGP folder somewhere you can write to, such as your Documents folder (not Program "
+             "Files), and open it again.";
+  return false;
 }
 
 fs::path default_home(const fs::path& exe_dir, const fs::path& fallback) {

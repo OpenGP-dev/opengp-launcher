@@ -3,6 +3,7 @@
 #include "core/user_data.h"
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <ctime>
 #include <string_view>
@@ -25,9 +26,11 @@ bool fail(std::string* error, const std::string& msg) {
   return false;
 }
 
-// Folders in user/ a backup leaves out.
+// What in user/ a backup leaves out (and a restore leaves alone): these
+// folders, and the lock file each running game holds (.lock-<game ID>).
 bool left_out(const fs::path& name) {
-  return name == "backups" || name == "logs" || name == "art" || name == "screenshots";
+  return name == "backups" || name == "logs" || name == "art" || name == "screenshots" ||
+         name.u8string().rfind(u8".lock-", 0) == 0;
 }
 
 std::string now_text() {
@@ -68,6 +71,16 @@ bool copy_user_files(const fs::path& from, const fs::path& to, std::string* erro
 
 bool valid_card_name(const std::string& name) {
   if (name.empty() || name.size() > 64 || name.front() == ' ' || name.back() == ' ' || name.back() == '.') return false;
+  // The games hold no card whose name OpenGP refuses: a leading dot, or
+  // Windows' device names (CON, COM1...), with or without an extension.
+  if (name.front() == '.') return false;
+  std::string base = name.substr(0, name.find('.'));
+  while (!base.empty() && base.back() == ' ') base.pop_back();
+  for (char& c : base) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+  for (const char* device : {"CON", "PRN", "AUX", "NUL"})
+    if (base == device) return false;
+  if (base.size() == 4 && (base.rfind("COM", 0) == 0 || base.rfind("LPT", 0) == 0) && base[3] >= '0' && base[3] <= '9')
+    return false;
   return std::none_of(name.begin(), name.end(), [](char c) {
     return static_cast<unsigned char>(c) < 32 || std::string_view("\\/:*?\"<>|").find(c) != std::string_view::npos;
   });

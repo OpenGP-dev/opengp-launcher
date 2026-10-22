@@ -198,7 +198,8 @@ Rectangle {
         if (running) return "Another game is running. Close it to play this one."
         switch (gameState) {
         case Launcher.Checking: return "Looking for the disc image and the game"
-        case Launcher.NoImage: return "OpenGP plays your own disc image of the game (.iso or .gcm)."
+        case Launcher.NoImage:
+            return game.imageNote || "OpenGP plays your own disc image of the game (.iso or .gcm). Add it here, or put it in the ISO folder next to OpenGP."
         case Launcher.NotBuilt:
             return Launcher.isPackage ? "Installing builds the game from your disc image. It takes a few minutes, once."
                                       : "Building runs CMake on this source tree with your disc image. The first build takes a while."

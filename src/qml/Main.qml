@@ -36,12 +36,29 @@ ApplicationWindow {
         function onCurrentChanged() { window.updateGame() }
         function onMessage(text, error) { toast.show(text, error) }
         function onMinimizeRequested() { window.showMinimized() }
+        function onRaiseRequested() {
+            if (window.visibility === Window.Minimized) window.showNormal()
+            window.raise()
+            window.requestActivate()
+        }
     }
     Component.onCompleted: {
         updateGame()
         if (startView === "play" || startView === "saves") home = false
         if (startView === "saves") tab = 1
         else if (startView.startsWith("settings")) settings.openPage(startView.split("/")[1] || "")
+    }
+
+    // A disc image dropped on the window is added, as with Add disc image.
+    DropArea {
+        anchors.fill: parent
+        enabled: Launcher.homeError.length === 0
+        onDropped: drop => {
+            if (drop.hasUrls && drop.urls.length > 0) {
+                Launcher.addImage(drop.urls[0])
+                drop.accept()
+            }
+        }
     }
 
     RowLayout {
@@ -173,7 +190,9 @@ ApplicationWindow {
                 visible: Launcher.homeError.length > 0
                 spacing: 12
                 Text {
-                    text: "OpenGP isn't in this folder"
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: Launcher.homeErrorTitle || "OpenGP isn't in this folder"
                     color: Theme.chalk
                     font.pixelSize: Theme.heading
                     font.weight: Font.ExtraBold
@@ -184,8 +203,13 @@ ApplicationWindow {
                     color: Theme.dim
                     font.pixelSize: Theme.lead
                     lineHeight: 1.25
-                    text: "Keep OpenGP (this program) in the folder it was unpacked to, next to its sdk folder. "
-                          + "The launcher looked in " + Launcher.homePath + ".\n\n" + Launcher.homeError
+                    // Unpacked in the wrong place, opened from its zip, or
+                    // a folder it can't write to: the reason says which.
+                    text: Launcher.homeErrorTitle ? Launcher.homeError
+                          : "Keep OpenGP (this program) in the folder it was unpacked to, next to its sdk folder. "
+                            + "If you opened it from inside its zip file, unpack the whole archive first (right-click "
+                            + "the zip and choose Extract All). The launcher looked in " + Launcher.homePath + ".\n\n"
+                            + Launcher.homeError
                 }
             }
         }
@@ -197,7 +221,8 @@ ApplicationWindow {
     FileDialog {
         id: imageDialog
         title: "Add a disc image"
-        nameFilters: ["Disc images (*.iso *.gcm)", "All files (*)"]
+        // Compressed images too, so that choosing one says how to convert it.
+        nameFilters: ["Disc images (*.iso *.gcm *.rvz *.gcz *.wia *.ciso)", "All files (*)"]
         onAccepted: Launcher.addImage(selectedFile)
     }
 }

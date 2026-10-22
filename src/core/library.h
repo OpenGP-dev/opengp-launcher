@@ -21,11 +21,14 @@ enum class GameState {
 struct GameStatus {
   GameState state = GameState::NoImage;
   std::string image;  // the disc image the game will use ("" if none)
+  std::string note;   // with no image: the one it used to have, if it is gone
 };
 
 // Each game's status, in home.games' order. Slow (it reads the disc images
-// and runs the games with --version): call it off the UI thread.
-std::vector<GameStatus> check_games(const Home& home);
+// and runs the games with --version): call it off the UI thread. `skipped`
+// gets a line for each file in ISO/ and private/ that is not a usable image,
+// and why (a compressed image, another game or region...).
+std::vector<GameStatus> check_games(const Home& home, std::vector<std::string>* skipped = nullptr);
 
 // Adds a disc image the player chose: records it in user/images.toml for its
 // game (the games and the installer look there first). Fails, saying why, if
