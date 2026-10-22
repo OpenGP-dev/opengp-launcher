@@ -97,6 +97,8 @@ class Launcher : public QObject {
   Q_INVOKABLE void refresh();
   Q_INVOKABLE void play(int index, bool testMenu = false, bool gameLog = false);
   Q_INVOKABLE void addImage(const QUrl& file);
+  // Clears the message about a disc image that could not be added.
+  Q_INVOKABLE void dismissImageError(int index);
   Q_INVOKABLE void build(int index);
   Q_INVOKABLE void cancelBuild();
   Q_INVOKABLE void removeBuild(int index);
@@ -123,6 +125,7 @@ class Launcher : public QObject {
  private:
   void apply_statuses(int generation, const std::vector<GameStatus>& statuses);
   void make_missing_art();
+  void set_image_error(int row, const QString& error);
   void game_ended(const QString& id, int exit_code, bool crashed);
   void finish_build(bool ok, const QString& error);
   // A source tree's games, built with CMake (see core/source_build.h).
@@ -152,6 +155,7 @@ class Launcher : public QObject {
   QString building_id_, progress_text_, running_id_, verifying_id_;
   double verify_progress_ = 0;
   std::set<std::string> verify_failed_;  // images that could not be read: not again until asked
+  std::set<std::string> art_failed_;     // images no pictures could be made from: not again until one is added
   double progress_ = -1;
   QStringList build_log_;
   std::vector<std::vector<std::string>> cmake_steps_;  // the CMake commands still to run

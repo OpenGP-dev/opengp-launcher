@@ -29,7 +29,8 @@ std::vector<GameStatus> check_games(const Home& home);
 
 // Adds a disc image the player chose: records it in user/images.toml for its
 // game (the games and the installer look there first). Fails, saying why, if
-// it is not the release of a game OpenGP supports. Sets `game_id`.
+// it is not the release of a game OpenGP supports. Sets `game_id` to the game
+// it is of, also when it is that game's wrong release.
 bool add_image(const Home& home, const std::string& image, std::string* game_id, std::string* error);
 
 }  // namespace launcher

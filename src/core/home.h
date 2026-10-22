@@ -35,8 +35,8 @@ struct Home {
 bool open_home(const fs::path& dir, const fs::path& user_dir, Home* home, std::string* error);
 
 // The OpenGP to look after when none is given: the launcher's own folder if
-// that is a package, else `fallback` (in development, the source tree the
-// launcher was built with).
+// that is a package, else `fallback` if it exists (in development, the source
+// tree the launcher was built with), else the launcher's own folder.
 fs::path default_home(const fs::path& exe_dir, const fs::path& fallback);
 
 // A path as UTF-8 text (std::filesystem would use the system's code page on

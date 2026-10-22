@@ -203,6 +203,11 @@ Popup {
                         help: "Waits for the screen, so the picture never tears."
                         Toggle { checked: GameSettings.vsync; onToggled: GameSettings.vsync = checked }
                     }
+                    SettingRow {
+                        label: "Even frame pacing"
+                        help: "Shows each frame on the game's own 60 Hz tick, as a cabinet does: smoother with FreeSync or G-Sync, for about 8 ms more delay."
+                        Toggle { checked: GameSettings.evenPacing; onToggled: GameSettings.evenPacing = checked }
+                    }
                 }
 
                 // Sound

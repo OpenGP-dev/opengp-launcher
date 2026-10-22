@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 // The chosen game's disc image and build (the news is on Home).
@@ -7,17 +8,18 @@ Item {
     property var game: ({})
     signal addImage()
 
-    RowLayout {
+    // Scrolls when the window is too short for all of it.
+    ScrollView {
         anchors.fill: parent
         anchors.leftMargin: 48
-        anchors.rightMargin: 48
+        anchors.rightMargin: 24
         anchors.bottomMargin: 24
-        spacing: 32
+        contentWidth: availableWidth
+        clip: true
 
         // About this game's files.
         Rectangle {
-            Layout.preferredWidth: 380
-            Layout.alignment: Qt.AlignTop
+            width: 380
             implicitHeight: info.implicitHeight + 40
             radius: 14
             color: Qt.rgba(0.082, 0.102, 0.145, 0.78)
@@ -77,6 +79,55 @@ Item {
                     font.pixelSize: Theme.small
                     wrapMode: Text.WordWrap
                     lineHeight: 1.2
+                }
+                // The last disc image chosen for this game that could not be
+                // added, and why: it stays until dismissed or an image is added.
+                Rectangle {
+                    Layout.fillWidth: true
+                    visible: !!tab.game.imageError
+                    implicitHeight: imageErrorRow.implicitHeight + 24
+                    radius: 10
+                    color: Qt.rgba(0.898, 0.141, 0.231, 0.14)
+                    border.color: Qt.rgba(0.898, 0.141, 0.231, 0.5)
+                    RowLayout {
+                        id: imageErrorRow
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 10
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+                            Text {
+                                text: "That disc image can't be used"
+                                color: Theme.chalk
+                                font.pixelSize: Theme.body
+                                font.weight: Font.ExtraBold
+                            }
+                            TextEdit {
+                                Layout.fillWidth: true
+                                text: tab.game.imageError || ""
+                                readOnly: true
+                                selectByMouse: true
+                                wrapMode: TextEdit.Wrap
+                                color: Theme.chalk
+                                selectionColor: Theme.blue
+                                font.family: Theme.family
+                                font.pixelSize: Theme.small
+                            }
+                        }
+                        Text {
+                            Layout.alignment: Qt.AlignTop
+                            text: "\u2715"
+                            color: Theme.dim
+                            font.pixelSize: Theme.body
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -8
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Launcher.dismissImageError(Launcher.currentIndex)
+                            }
+                        }
+                    }
                 }
                 Flow {
                     Layout.fillWidth: true

@@ -32,6 +32,10 @@ Controls* Controls::create(QQmlEngine*, QJSEngine*) {
 void Controls::start() {
   // No SDL window here: let SDL report controllers anyway.
   SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+  // Qt, not SDL, decides when the launcher quits: SDL would turn SIGTERM and
+  // SIGINT into a quit event nothing reads, and the launcher would not stop
+  // when the system asks it to (at logout, for one).
+  SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
   input_ = std::make_unique<input::HostInput>();
   std::string error;
   error_.clear();
@@ -54,6 +58,12 @@ void Controls::suspend() {
 
 void Controls::resume() {
   if (!input_) start();
+}
+
+void Controls::reload() {
+  if (!input_) return;
+  suspend();
+  start();
 }
 
 input::HostInput::DeviceKind Controls::kind() const { return static_cast<input::HostInput::DeviceKind>(device_); }

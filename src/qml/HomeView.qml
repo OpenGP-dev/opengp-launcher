@@ -47,6 +47,7 @@ Item {
         required property string title
         required property string logo
         required property int gameState
+        required property string imageError
         readonly property bool building: gameId.length > 0 && Launcher.buildingId === gameId
         readonly property bool runningThis: gameId.length > 0 && Launcher.runningId === gameId
 
@@ -128,7 +129,7 @@ Item {
             if (runningThis) return "Playing"
             switch (gameState) {
             case Launcher.Checking: return "Checking"
-            case Launcher.NoImage: return "Needs its disc image"
+            case Launcher.NoImage: return imageError ? "That disc image can't be used" : "Needs its disc image"
             case Launcher.NotBuilt: return Launcher.isPackage ? "Not installed yet" : "Not built yet"
             case Launcher.OutOfDate: return "Built by another version of OpenGP"
             default: return "Ready to play"

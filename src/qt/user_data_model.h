@@ -41,7 +41,8 @@ class UserData : public QObject {
   // A new card: the next free name becomes the card the player holds; the game
   // saves it when it hands the card out.
   Q_INVOKABLE void newCard();
-  Q_INVOKABLE void renameCard(const QString& from, const QString& to);
+  // False if it could not (the reason is shown).
+  Q_INVOKABLE bool renameCard(const QString& from, const QString& to);
   Q_INVOKABLE void duplicateCard(const QString& name);
   Q_INVOKABLE void deleteCard(const QString& name);
   Q_INVOKABLE void importCard(const QUrl& file);

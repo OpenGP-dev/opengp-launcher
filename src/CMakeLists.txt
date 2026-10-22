@@ -30,6 +30,9 @@ set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_add_qml_module(opengp_launcher
   URI OpenGP.Launcher
   VERSION 1.0
+  # Not the default OpenGP/Launcher/ beside the executable: on Linux that
+  # folder and the executable (OpenGP) would have the same name.
+  OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/qml/OpenGP/Launcher
   QML_FILES
     qml/Main.qml
     qml/Theme.qml

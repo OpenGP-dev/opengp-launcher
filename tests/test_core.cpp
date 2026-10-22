@@ -15,11 +15,13 @@
 #include "core/dump_check.h"
 #include "core/game_process.h"
 #include "core/home.h"
+#include "core/library.h"
 #include "core/news.h"
 #include "core/prefs.h"
 #include "core/scancodes.h"
 #include "core/source_build.h"
 #include "core/user_data.h"
+#include "app/paths.h"
 #include "disc/sha1.h"
 
 using namespace launcher;
@@ -115,7 +117,9 @@ TEST_CASE("an installed package and a source tree are found") {
     CHECK(home.games[1].short_title == "GP1");
     CHECK(home.games[1].exe ==  // not built yet: where the default preset puts it
           src / "build" / default_preset() / "games" / "mkgp1" / (std::string("opengp-mkgp1") + kExe));
+    fs::create_directories(dir.path / "fallback");
     CHECK(default_home(src, dir.path / "fallback") == dir.path / "fallback");
+    CHECK(default_home(src, dir.path / "not there") == src);  // a package's launcher, moved out of it
   }
   Home home;
   std::string error;
@@ -424,4 +428,30 @@ TEST_CASE("disc images are checked against the known good dumps") {
   REQUIRE(image_stamp(image, &size, &modified));
   CHECK(size == static_cast<std::int64_t>(kGpSize + 16));
   CHECK_FALSE(image_stamp(utf8(dir.path / "none.iso"), &size, &modified));
+}
+
+TEST_CASE("a disc image of another release says which game it is, and is not recorded") {
+  TempDir dir("opengp_launcher_add_image");
+  const fs::path src = dir.path / "src";
+  write(src / "games" / "mkgp2" / "game.toml", kGameToml);  // dol_sha1 "abc": no image is this release
+  std::string image(0x440 + 0x100, '\0');
+  image.replace(0, 6, "GGPE02");
+  image.replace(0x1C, 4, "\xC2\x33\x9F\x3D");
+  image.replace(0x420, 4, std::string("\0\0\x04\x40", 4));
+  write(dir.path / "game.iso", image);
+  write(dir.path / "junk.iso", "not a disc");
+  Home home;
+  std::string error, id;
+  REQUIRE_MESSAGE(open_home(src, {}, &home, &error), error);
+
+  // The launcher keeps the reason on that game's page.
+  CHECK_FALSE(add_image(home, utf8(dir.path / "game.iso"), &id, &error));
+  CHECK(id == "GGPE02");
+  CHECK(error.find("not the release OpenGP supports") != std::string::npos);
+  CHECK(app::remembered_image(home.user_dir, "GGPE02").empty());
+
+  // Not a disc image at all: no game to say.
+  id.clear();
+  CHECK_FALSE(add_image(home, utf8(dir.path / "junk.iso"), &id, &error));
+  CHECK(id.empty());
 }

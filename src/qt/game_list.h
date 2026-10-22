@@ -30,6 +30,7 @@ class GameList : public QAbstractListModel {
     DumpCheckRole,  // the image against the known good dumps: Launcher.DumpState
     DumpNameRole,   // the known good dump it is, or should be
     DumpNoteRole,   // what is wrong with it, or "" if nothing
+    ImageErrorRole, // why the last disc image chosen for it could not be added, or ""
   };
 
   struct Entry {
@@ -39,6 +40,7 @@ class GameList : public QAbstractListModel {
     QStringList heroes;
     int dump_check = -1;  // Launcher::DumpState; -1 (NotChecked) until it is
     QString dump_name, dump_note;
+    QString image_error;
   };
 
   using QAbstractListModel::QAbstractListModel;

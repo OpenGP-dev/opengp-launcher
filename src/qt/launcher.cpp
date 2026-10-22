@@ -224,19 +224,26 @@ void Launcher::make_missing_art() {
   for (int i = 0; i < games_.rowCount(); ++i) {
     const GameList::Entry& e = games_.at(i);
     const QString dir = qs(home_.user_dir / "art" / e.id.toStdString());
-    if (!e.image.isEmpty() && !existing_art(dir, e.image).current) jobs.push_back({e.id, e.image, dir});
+    if (!e.image.isEmpty() && !art_failed_.count(e.image.toStdString()) && !existing_art(dir, e.image).current)
+      jobs.push_back({e.id, e.image, dir});
   }
   if (jobs.empty()) return;
   if (art_thread_.joinable()) art_thread_.join();
   art_running_ = true;
   art_thread_ = std::thread([this, jobs = std::move(jobs)] {
+    std::vector<std::string> failed;
     for (const Job& job : jobs) {
       if (cancel_) break;
       QString error;
-      if (!make_art(job.image, job.id, job.dir, &error)) qWarning("pictures for %s: %s", qPrintable(job.id), qPrintable(error));
+      if (!make_art(job.image, job.id, job.dir, &error)) {
+        qWarning("pictures for %s: %s", qPrintable(job.id), qPrintable(error));
+        failed.push_back(job.image.toStdString());
+      }
     }
-    QMetaObject::invokeMethod(this, [this] {
+    QMetaObject::invokeMethod(this, [this, failed] {
       art_running_ = false;
+      // Not again (each try looks at the games again, which makes more tries).
+      art_failed_.insert(failed.begin(), failed.end());
       refresh();
     }, Qt::QueuedConnection);
   });
@@ -292,18 +299,34 @@ void Launcher::game_ended(const QString& id, int exit_code, bool crashed) {
 void Launcher::addImage(const QUrl& file) {
   const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
   std::string id, error;
-  if (!add_image(home_, path.toStdString(), &id, &error)) {
+  const bool ok = add_image(home_, path.toStdString(), &id, &error);
+  // The game the image is of, else the one chosen.
+  const int row = id.empty() ? current_ : row_of(qs(id));
+  setCurrentIndex(row);
+  if (!ok) {
+    // On the game's page too, until dismissed: the message goes after a while.
+    set_image_error(row, qs(error));
     emit message(qs(error), true);
     return;
   }
-  const int row = row_of(qs(id));
+  set_image_error(row, {});
   if (row >= 0) {
-    setCurrentIndex(row);
     // New pictures for the new image.
     QDir(qs(home_.user_dir / "art" / id)).removeRecursively();
+    art_failed_.clear();
     emit message(games_.at(row).title + QStringLiteral(": disc image added."), false);
   }
   refresh();
+}
+
+void Launcher::dismissImageError(int index) { set_image_error(index, {}); }
+
+void Launcher::set_image_error(int row, const QString& error) {
+  if (row < 0 || row >= games_.rowCount() || games_.at(row).image_error == error) return;
+  GameList::Entry e = games_.at(row);
+  e.image_error = error;
+  games_.update(row, e);
+  emit currentChanged();  // the current game's details changed
 }
 
 void Launcher::build(int index) {

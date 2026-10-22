@@ -130,10 +130,12 @@ int main(int argc, char** argv) {
     auto* once = new QObject(&launcher);
     QObject::connect(&launcher, &Launcher::checkingChanged, once, [&launcher, once] {
       if (launcher.checking()) return;
+      once->deleteLater();
+      // No OpenGP where the launcher looked: its window says so.
       const int row = launcher.currentIndex();
+      if (!launcher.homeError().isEmpty() || row >= launcher.games()->rowCount()) return;
       if (launcher.games()->at(row).state == Launcher::Ready) launcher.play(row);
       else emit launcher.message(launcher.games()->at(row).title + QStringLiteral(" isn't ready to play yet."), true);
-      once->deleteLater();
     });
   }
 

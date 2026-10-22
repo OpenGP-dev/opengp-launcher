@@ -332,8 +332,7 @@ Item {
                     kind: "primary"
                     enabled: renameBox.text.trim().length > 0
                     onClicked: {
-                        UserData.renameCard(tab.selectedCard, renameBox.text)
-                        tab.selectedCard = renameBox.text.trim()
+                        if (UserData.renameCard(tab.selectedCard, renameBox.text)) tab.selectedCard = renameBox.text.trim()
                         rename.close()
                     }
                 }

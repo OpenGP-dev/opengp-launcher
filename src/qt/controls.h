@@ -40,6 +40,7 @@ class Controls : public QObject {
   explicit Controls(QString path, QObject* parent = nullptr);
   ~Controls() override;
   static Controls* create(QQmlEngine*, QJSEngine*);
+  static Controls* instance() { return instance_; }
 
   int device() const { return device_; }
   void setDevice(int device);
@@ -66,6 +67,8 @@ class Controls : public QObject {
   // of them, and read the file again afterwards.
   void suspend();
   void resume();
+  // Reads the file again (a backup was restored), unless a game has it.
+  void reload();
 
  signals:
   void changed();

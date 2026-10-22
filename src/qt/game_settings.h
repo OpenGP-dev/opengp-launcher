@@ -31,6 +31,7 @@ class GameSettings : public QObject {
   Q_PROPERTY(QStringList aspectNames READ aspectNames CONSTANT)
   Q_PROPERTY(int internalResolution READ internalResolution WRITE setInternalResolution NOTIFY changed)
   Q_PROPERTY(bool vsync READ vsync WRITE setVsync NOTIFY changed)
+  Q_PROPERTY(bool evenPacing READ evenPacing WRITE setEvenPacing NOTIFY changed)
   // [audio]
   Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY changed)
   // [game]
@@ -65,6 +66,7 @@ class GameSettings : public QObject {
   QStringList aspectNames() const;
   int internalResolution() const { return static_cast<int>(s_.internal_resolution); }
   bool vsync() const { return s_.vsync; }
+  bool evenPacing() const { return s_.even_pacing; }
   int volume() const { return s_.volume; }
   bool freePlay() const { return s_.free_play; }
   bool pauseInMenu() const { return s_.pause_in_menu; }
@@ -83,6 +85,7 @@ class GameSettings : public QObject {
   void setAspect(int v);
   void setInternalResolution(int v);
   void setVsync(bool v);
+  void setEvenPacing(bool v);
   void setVolume(int v);
   void setFreePlay(bool v);
   void setPauseInMenu(bool v);

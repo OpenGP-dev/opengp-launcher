@@ -118,11 +118,15 @@ fs::path default_home(const fs::path& exe_dir, const fs::path& fallback) {
   std::error_code ec;
   if (fs::is_regular_file(exe_dir / "sdk" / "package.toml", ec)) return exe_dir;
   // In a macOS app bundle: the folder OpenGP.app is in.
+  fs::path dir = exe_dir;
   if (exe_dir.filename() == "MacOS" && exe_dir.parent_path().filename() == "Contents") {
-    const fs::path outside = exe_dir.parent_path().parent_path().parent_path();
-    if (fs::is_regular_file(outside / "sdk" / "package.toml", ec)) return outside;
+    dir = exe_dir.parent_path().parent_path().parent_path();
+    if (fs::is_regular_file(dir / "sdk" / "package.toml", ec)) return dir;
   }
-  return fallback;
+  // The fallback only if it is there: a package's launcher names the folder
+  // it was built in, on another computer. Else this folder, so that the
+  // player is told where the launcher looked.
+  return fs::is_directory(fallback, ec) ? fallback : dir;
 }
 
 }  // namespace launcher

@@ -7,6 +7,7 @@
 #include <QQmlEngine>
 
 #include "core/user_data.h"
+#include "qt/controls.h"
 #include "qt/game_settings.h"
 #include "qt/launcher.h"
 #include "triforce/card_folder.h"
@@ -77,12 +78,13 @@ void UserData::newCard() {
   refresh();
 }
 
-void UserData::renameCard(const QString& from, const QString& to) {
-  if (locked()) return;
+bool UserData::renameCard(const QString& from, const QString& to) {
+  if (locked()) return false;
   std::string error;
-  if (report(rename_card(user_dir(), game_id(), from.toStdString(), to.trimmed().toStdString(), &error), error, {}) &&
-      GameSettings::instance()->card() == from)
-    GameSettings::instance()->setCard(to.trimmed());
+  if (!report(rename_card(user_dir(), game_id(), from.toStdString(), to.trimmed().toStdString(), &error), error, {}))
+    return false;
+  if (GameSettings::instance()->card() == from) GameSettings::instance()->setCard(to.trimmed());
+  return true;
 }
 
 void UserData::duplicateCard(const QString& name) {
@@ -123,6 +125,7 @@ void UserData::restoreBackup(const QString& name) {
   if (report(restore_backup(user_dir(), name.toStdString(), &error), error,
              QStringLiteral("Restored ") + name + QStringLiteral(" (what was there before is backed up too)."))) {
     GameSettings::instance()->reload();
+    Controls::instance()->reload();
     app().refresh();
   }
 }

@@ -94,6 +94,7 @@ void GameSettings::setInternalResolution(int v) {
   edit([&](app::Settings& s) { s.internal_resolution = static_cast<gekko::u32>(std::clamp(v, 0, 8)); });
 }
 void GameSettings::setVsync(bool v) { edit([&](app::Settings& s) { s.vsync = v; }); }
+void GameSettings::setEvenPacing(bool v) { edit([&](app::Settings& s) { s.even_pacing = v; }); }
 void GameSettings::setVolume(int v) { edit([&](app::Settings& s) { s.volume = std::clamp(v, 0, 100); }); }
 void GameSettings::setFreePlay(bool v) { edit([&](app::Settings& s) { s.free_play = v; }); }
 void GameSettings::setPauseInMenu(bool v) { edit([&](app::Settings& s) { s.pause_in_menu = v; }); }

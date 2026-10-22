@@ -52,11 +52,11 @@ bool add_image(const Home& home, const std::string& image, std::string* game_id,
   for (const Game& g : home.games)
     if (g.info.id == img.game_id() || (!sha1.empty() && g.info.dol_sha1 == sha1)) game = &g;
   if (!game) return fail("This is " + img.game_id() + ", not a game OpenGP plays (Mario Kart Arcade GP 2 or GP 1).");
+  if (game_id) *game_id = game->info.id;
   if (sha1 != game->info.dol_sha1)
     return fail("This is " + game->info.title + ", but not the release OpenGP supports: its main.dol has the SHA-1 " +
                 sha1 + ", and OpenGP needs " + game->info.dol_sha1 + ".");
   if (!app::remember_image(home.user_dir, game->info.id, image, &err)) return fail(err);
-  if (game_id) *game_id = game->info.id;
   return true;
 }
 
