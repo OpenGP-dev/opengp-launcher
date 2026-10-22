@@ -159,14 +159,22 @@ int main(int argc, char** argv) {
     home_error_title = QStringLiteral("OpenGP can't write to its folder");
     home_error = QString::fromStdString(error);
   }
+  // No OpenGP here (no games): nothing is written to this folder, which may
+  // be Downloads or Applications. The launcher only says where to put it.
+  const bool found = !home.games.empty();
+  auto user_file = [&](const char* name) {
+    return found ? QString::fromStdString(utf8(home.user_dir / name)) : QString();
+  };
   std::error_code ec;
-  fs::create_directories(home.user_dir, ec);
+  if (found) fs::create_directories(home.user_dir, ec);
 
-  const QString prefs_path = QString::fromStdString(utf8(home.user_dir / "launcher.toml"));
+  const QString prefs_path = user_file("launcher.toml");
+  const QString settings_path = user_file("settings.toml");
+  const QString controls_path = user_file("controls.toml");
   Launcher launcher(std::move(home), home_error, prefs_path);
   launcher.setHomeErrorTitle(home_error_title);
-  GameSettings settings(QString::fromStdString(utf8(launcher.home().user_dir / "settings.toml")));
-  Controls controls(QString::fromStdString(utf8(launcher.home().user_dir / "controls.toml")));
+  GameSettings settings(settings_path);
+  Controls controls(controls_path);
   if (args.isSet(game_opt))
     for (int i = 0; i < launcher.games()->rowCount(); ++i)
       if (launcher.games()->at(i).id == args.value(game_opt)) launcher.setCurrentIndex(i);

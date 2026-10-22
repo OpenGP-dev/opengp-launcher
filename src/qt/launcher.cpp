@@ -125,6 +125,7 @@ Launcher* Launcher::create(QQmlEngine*, QJSEngine*) {
 }
 
 void Launcher::save_prefs() {
+  if (prefs_path_.isEmpty()) return;  // no OpenGP: nowhere to keep them
   std::string error;
   if (!launcher::save_prefs(prefs_path_.toStdString(), prefs_, &error)) emit message(qs(error), true);
 }

@@ -45,7 +45,10 @@ QString News::url() const {
   return override_url.empty() ? QStringLiteral(LAUNCHER_NEWS_URL) : QString::fromStdString(override_url);
 }
 
-QString News::cache_path() const { return QString::fromStdString(utf8(app().home().user_dir / "news.toml")); }
+QString News::cache_path() const {
+  // No OpenGP (no games): no user folder to keep it in.
+  return app().home().games.empty() ? QString() : QString::fromStdString(utf8(app().home().user_dir / "news.toml"));
+}
 
 bool News::enabled() const { return app().prefs().news; }
 

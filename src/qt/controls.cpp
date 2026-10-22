@@ -40,8 +40,9 @@ void Controls::start() {
   std::string error;
   error_.clear();
   // A failure, or warnings (a binding OpenGP did not understand, a file it
-  // set aside as controls.toml.bad): shown either way.
-  input_->load(path_.toStdString(), &error);
+  // set aside as controls.toml.bad): shown either way. No OpenGP, no file:
+  // load would write the defaults there.
+  if (!path_.isEmpty()) input_->load(path_.toStdString(), &error);
   if (!error.empty()) error_ = QString::fromStdString(error);
   error.clear();
   if (!input_->init(&error)) error_ = QStringLiteral("No controllers: ") + QString::fromStdString(error);
@@ -155,7 +156,7 @@ void Controls::restoreDefaults() {
 
 void Controls::save() {
   std::string error;
-  error_ = input_ && !input_->save(&error) ? QString::fromStdString(error) : QString();
+  error_ = input_ && !path_.isEmpty() && !input_->save(&error) ? QString::fromStdString(error) : QString();
   emit changed();
 }
 

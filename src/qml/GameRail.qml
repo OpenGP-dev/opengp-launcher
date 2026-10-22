@@ -195,12 +195,16 @@ Rectangle {
             }
         }
 
+        // Neither means anything without OpenGP (no games): its settings are
+        // kept in its folder.
         RailButton {
+            visible: Launcher.games.count > 0
             icon: "plus"
             label: "Add game"
             onClicked: rail.addImage()
         }
         RailButton {
+            visible: Launcher.games.count > 0
             icon: "gear"
             label: "Settings"
             onClicked: rail.openSettings()

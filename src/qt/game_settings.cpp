@@ -54,7 +54,7 @@ void GameSettings::reload() {
 }
 
 void GameSettings::resetToDefaults() {
-  if (locked_) return;
+  if (locked_ || path_.isEmpty()) return;
   // An unreadable file is kept as settings.toml.bad, as the games keep it,
   // so the player can still look at what was in it.
   QString kept;
@@ -73,7 +73,7 @@ void GameSettings::resetToDefaults() {
 
 template <typename Fn>
 void GameSettings::edit(Fn change) {
-  if (locked_ || !error_.isEmpty()) {
+  if (locked_ || !error_.isEmpty() || path_.isEmpty()) {
     emit changed();  // put the controls back
     return;
   }
