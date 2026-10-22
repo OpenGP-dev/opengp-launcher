@@ -536,6 +536,23 @@ TEST_CASE("the player is told why a disc image isn't used") {
   CHECK(error == "No such file.");
 }
 
+TEST_CASE("with no OpenGP folder, no disc images are looked for") {
+  // An app on macOS starts in /, whose private/ the launcher used to search
+  // (stopping at the first folder in it that it could not read).
+  TempDir dir("opengp_launcher_no_home");
+  write(dir.path / "private" / "x.iso", "not a disc");
+  write(dir.path / "ISO" / "y.iso", "not a disc");
+  const fs::path was = fs::current_path();
+  fs::current_path(dir.path);
+  Home home;
+  std::string error;
+  CHECK_FALSE(open_home(dir.path / "not-opengp", {}, &home, &error));
+  std::vector<std::string> skipped;
+  CHECK(check_games(home, &skipped).empty());
+  CHECK(skipped.empty());
+  fs::current_path(was);
+}
+
 #ifndef _WIN32
 TEST_CASE("a folder the player can't read is passed over, and a folder they can't write to is named") {
   TempDir dir("opengp_launcher_unreadable");

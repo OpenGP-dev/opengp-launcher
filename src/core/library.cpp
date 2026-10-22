@@ -36,11 +36,13 @@ std::string why_not_supported(const installer::Package& package, const std::stri
 
 // The images the installer would find (the one each game was installed
 // from, then any in ISO/ and private/), with a line in `skipped` for each
-// file there that is not one. Not OpenGP 1.0.0's find_images, which throws
-// at a folder it cannot read.
+// file there that is not one. Not OpenGP 1.0.0's find_images: that throws
+// at a folder it cannot read, and with no OpenGP folder it would look in
+// the working folder's ISO/ and private/ (/private, for an app on macOS).
 std::vector<std::pair<const installer::GameInfo*, std::string>> find_images(const installer::Package& package,
                                                                             std::vector<std::string>* skipped) {
   std::vector<std::pair<const installer::GameInfo*, std::string>> found;
+  if (package.home.empty()) return found;
   auto have = [&](const installer::GameInfo* g) {
     return std::any_of(found.begin(), found.end(), [&](const auto& f) { return f.first == g; });
   };
@@ -76,6 +78,8 @@ std::vector<std::pair<const installer::GameInfo*, std::string>> find_images(cons
 }  // namespace
 
 std::vector<GameStatus> check_games(const Home& home, std::vector<std::string>* skipped) {
+  // No OpenGP where the launcher looked: nothing to look at.
+  if (home.games.empty()) return {};
   const auto images = find_images(home.pkg, skipped);
   std::vector<GameStatus> out;
   for (const Game& g : home.games) {
