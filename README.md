@@ -60,7 +60,9 @@ there) and builds the game, with CMake's output in `build/<preset>/launcher-buil
 Windows, start the launcher from OpenGP's dev shell (`tools/devshell.ps1`) so CMake finds clang-cl.
 
 ```
-OpenGP [--home DIR] [--user-dir DIR] [--game ID] [--play]    --play: start the game at once (shortcuts)
+OpenGP [--home DIR] [--user-dir DIR] [--game ID] [--play] [IMAGE...]
+                                             --play: start the game at once (shortcuts)
+                                             IMAGE: disc images to add (dropped on OpenGP)
 OpenGP --version
 OpenGP --smoke-test                          load the interface and quit (fails on any QML warning)
 OpenGP --screenshot-ui FILE [--view VIEW]    a picture of the window, then quit
@@ -96,7 +98,7 @@ Things it takes care of:
 | # | Feature |
 |---|---------|
 | L1 | Disc image checking: each image checked against the known good dump of its game (the SHA-1 of the image after its header, from FIX94's [triforce-header-patcher](https://github.com/FIX94/triforce-header-patcher)), in the background, on the Play tab (`dump_check`) (**done**) |
-| L2 | Drag and drop: drop an `.iso` or `.gcm` on the window to add it, as **Add disc image** does |
+| L2 | Drag and drop: drop an `.iso` or `.gcm` on the window to add it, as **Add disc image** does (**done**) |
 
 ## Licence
 
