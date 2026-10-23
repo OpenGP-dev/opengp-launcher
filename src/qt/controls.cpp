@@ -43,9 +43,12 @@ void Controls::start() {
   error_.clear();
   // A file OpenGP cannot read (one input it does not know is enough) leaves
   // the default controls in place: say so, and save nothing over it until the
-  // player restores the defaults. No OpenGP, no file: load would write the
-  // defaults there.
-  load_failed_ = !path_.isEmpty() && !input_->load(path_.toStdString(), &error);
+  // player restores the defaults. Only while the file is still there: an
+  // OpenGP that sets it aside itself, as controls.toml.bad, leaves nothing to
+  // keep. No OpenGP, no file: load would write the defaults there.
+  std::error_code ec;
+  load_failed_ = !path_.isEmpty() && !input_->load(path_.toStdString(), &error) &&
+                 std::filesystem::exists(os::utf8_path(path_.toStdString()), ec);
   if (!error.empty()) error_ = QString::fromStdString(error);
   error.clear();
   if (!input_->init(&error)) error_ = QStringLiteral("No controllers: ") + QString::fromStdString(error);
