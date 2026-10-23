@@ -10,6 +10,10 @@ submodule out, so clone with `--recursive`.
 A launcher binary contains the third-party work below. Each keeps its own licence. A copy of the
 launcher that is handed out must come with these notices and the licence texts they point to.
 
+OpenGP's installer packages do. There, this file is `licenses/launcher-THIRD-PARTY-NOTICES.md`, the
+GPL is the package's `LICENSE`, and the other texts are in `licenses/`: Qt's LGPL as
+`Qt-LGPL-3.0.txt`, the typeface's licence as `MPLUSRounded1c-OFL.txt`, and SDL's and toml++'s.
+
 | Work | Licence | Where |
 |------|---------|-------|
 | [Qt 6](https://www.qt.io/), 6.8 or later | LGPL-3.0 | the interface, linked as shared libraries |
@@ -24,9 +28,9 @@ launcher that is handed out must come with these notices and the licence texts t
 The launcher's interface is built with Qt 6 (Qt Core, Qt Gui, Qt Network, Qt Qml, Qt Quick and Qt
 Quick Controls, with the libraries and plugins they need), Copyright (C) The Qt Company Ltd. and
 other contributors. The launcher uses Qt under the GNU Lesser General Public License, version 3
-(LGPL-3.0). That is the GNU GPL version 3 ([LICENSE](LICENSE)) with the extra permissions at
-<https://www.gnu.org/licenses/lgpl-3.0.html>, which Qt's source also has as
-`LICENSES/LGPL-3.0-only.txt`.
+(LGPL-3.0). That is the GNU GPL version 3 ([LICENSE](LICENSE)) with the extra permissions in
+[licenses/Qt-LGPL-3.0.txt](licenses/Qt-LGPL-3.0.txt), as Qt's source has them in
+`LICENSES/LGPL-3.0-only.txt` (also at <https://www.gnu.org/licenses/lgpl-3.0.html>).
 
 The launcher builds against Qt 6.8 or later, with no changes to Qt, and links it as shared
 libraries, so they can be replaced with another build of the same Qt version. The source code of

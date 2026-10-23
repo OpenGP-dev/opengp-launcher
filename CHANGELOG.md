@@ -67,3 +67,6 @@ Since the launcher was first marked 1.0.0:
 - `THIRD-PARTY-NOTICES.md` lists the third-party work in a launcher, with its licences and
   notices: Qt 6, SDL 3, toml++, OpenGP's texture decoders ported from Dolphin, the M PLUS Rounded 1c
   typeface and SDL's scancode tables. It also says where the source code is, Qt's included.
+- An OpenGP package carries these notices as `licenses/launcher-THIRD-PARTY-NOTICES.md`, with the
+  texts they point to: Qt's LGPL (`licenses/Qt-LGPL-3.0.txt`) and the typeface's licence
+  (`licenses/MPLUSRounded1c-OFL.txt`).

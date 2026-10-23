@@ -130,9 +130,10 @@ tweaks. Besides what is above:
 Copyright (C) 2026 the OpenGP contributors. GPL-3.0-or-later, like OpenGP ([LICENSE](LICENSE)). The
 source code is this repository and OpenGP at the commit `external/OpenGP` points to.
 
-A launcher also contains third-party work, each under its own licence: Qt 6 (LGPL-3.0), SDL 3 with
-HIDAPI and yuv2rgb, toml++, OpenGP's texture decoders ported from Dolphin, the interface's typeface
-M PLUS Rounded 1c (SIL Open Font Licence, [src/fonts/OFL.txt](src/fonts/OFL.txt)), cut down to Latin
-letters, and SDL's scancode tables (zlib licence, in the file).
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) lists them with their notices, and says where Qt's
-source is.
+A launcher also contains third-party work, each under its own licence: Qt 6 (LGPL-3.0,
+[licenses/Qt-LGPL-3.0.txt](licenses/Qt-LGPL-3.0.txt)), SDL 3 with HIDAPI and yuv2rgb, toml++,
+OpenGP's texture decoders ported from Dolphin, the interface's typeface M PLUS Rounded 1c (SIL Open
+Font Licence, [src/fonts/OFL.txt](src/fonts/OFL.txt)), cut down to Latin letters, and SDL's scancode
+tables (zlib licence, in the file). [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) lists them with
+their notices, and says where Qt's source is. An OpenGP package carries it as
+`licenses/launcher-THIRD-PARTY-NOTICES.md`, with the licence texts it points to.

@@ -162,6 +162,8 @@ if(WIN32)
 endif()
 
 # The launcher's licences that the package doesn't already have (it has the
-# GPL as LICENSE, and SDL's and toml++'s in licenses/).
+# GPL as LICENSE, and SDL's and toml++'s in licenses/): its notices, Qt's LGPL
+# (which a copy of Qt's libraries must come with) and the typeface's licence.
 install(FILES ${PROJECT_SOURCE_DIR}/THIRD-PARTY-NOTICES.md DESTINATION licenses RENAME launcher-THIRD-PARTY-NOTICES.md)
+install(FILES ${PROJECT_SOURCE_DIR}/licenses/Qt-LGPL-3.0.txt DESTINATION licenses)
 install(FILES fonts/OFL.txt DESTINATION licenses RENAME MPLUSRounded1c-OFL.txt)
