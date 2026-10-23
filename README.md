@@ -55,10 +55,10 @@ top, with the Qt it needs, the Visual C++ runtime on Windows, and its licences i
 own deployment does the Qt part: windeployqt on Windows, macdeployqt on macOS (into `OpenGP.app`),
 and on Linux the libraries, plugins and QML modules in `qt/`, with `qt.conf` next to the launcher.
 On Linux the launcher uses X11 (XWayland on a Wayland desktop). The package carries the xcb-util
-libraries that Qt needs and not every desktop has, so the build machine needs them:
-`libxcb-cursor0`, `libxcb-icccm4`, `libxcb-image0`, `libxcb-keysyms1` and `libxcb-render-util0`. A
-release build has no development folder to fall back on, so outside a package it looks only in its
-own folder:
+libraries that Qt needs and not every desktop has, so the build machine needs them, or the install
+stops: `libxcb-cursor0`, `libxcb-icccm4`, `libxcb-image0`, `libxcb-keysyms1`, `libxcb-render-util0`
+and `libxcb-util1`. A release build has no development folder to fall back on, so outside a package
+it looks only in its own folder:
 
 ```sh
 cmake -B build/release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=<Qt>/<version>/<kit> \

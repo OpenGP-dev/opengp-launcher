@@ -131,7 +131,7 @@ if(NOT APPLE)
                       EXCLUDE_BY_TYPE qmltooling egldeviceintegrations)
     # The libraries of the system stay the player's, except the X11 helpers
     # Qt's xcb plugin needs that not every desktop has (libxcb-cursor0 above
-    # all): those come from the build machine, if it has them.
+    # all): those come from the build machine (checked below).
     set(system_libs_bundled "/libxcb-cursor[.]so" "/libxcb-icccm[.]so" "/libxcb-image[.]so" "/libxcb-keysyms[.]so"
                             "/libxcb-render-util[.]so" "/libxcb-util[.]so")
   endif()
@@ -144,6 +144,26 @@ endif()
 qt_generate_deploy_qml_app_script(TARGET opengp_launcher OUTPUT_SCRIPT deploy_script
                                   NO_TRANSLATIONS NO_COMPILER_RUNTIME POST_INCLUDE_REGEXES ${system_libs_bundled})
 install(SCRIPT ${deploy_script})
+
+if(UNIX AND NOT APPLE)
+  # Qt's deployment skips a library it can't find without a word, and without
+  # these the launcher doesn't start on a desktop that lacks them: the install
+  # stops instead.
+  install(CODE [[
+    set(missing "")
+    foreach(lib libxcb-cursor.so.0 libxcb-icccm.so.4 libxcb-image.so.0 libxcb-keysyms.so.1 libxcb-render-util.so.0
+                libxcb-util.so.1)
+      if(NOT EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/qt/lib/${lib}")
+        list(APPEND missing ${lib})
+      endif()
+    endforeach()
+    if(missing)
+      list(JOIN missing ", " missing)
+      message(FATAL_ERROR "Qt's xcb plugin needs libraries that the build machine doesn't have: ${missing} "
+                          "(on Debian and Ubuntu: apt install libxcb-cursor0 libxcb-icccm4 libxcb-image0 "
+                          "libxcb-keysyms1 libxcb-render-util0 libxcb-util1).")
+    endif()]])
+endif()
 
 if(APPLE)
   # macdeployqt rewrites the libraries it copies into OpenGP.app, which breaks
