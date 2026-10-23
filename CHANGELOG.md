@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.0.1 (not released yet)
+
+Launcher 1.0.1 goes with OpenGP 1.0.1: it is built on OpenGP 1.0.1's code, so it reads and writes
+the games' files as the 1.0.1 games do. It still opens an OpenGP 1.0.0 package folder.
+
+### Fixes
+
+- Windows: the launcher now works in a folder, and with a disc image, whose path has characters
+  other than A to Z, digits and simple punctuation (such as é, ü or 日本, as in a user folder
+  named José): 1.0.0's known issue. In such a folder it used to show the default settings and
+  controls, and its first change wrote them over the player's own, losing the held card, the
+  linked cabinet settings and every custom binding. With an OpenGP 1.0.0 package the games
+  themselves still don't work there: OpenGP 1.0.1 fixes them.
+- One value OpenGP does not understand in `settings.toml` or `controls.toml` no longer makes the
+  whole file unreadable on the Settings and Controls pages: the rest is read, as the 1.0.1 games
+  read it. A `controls.toml` that can't be read at all is set aside as `controls.toml.bad` at
+  once, as the games set it aside, and the Controls page can be used again.
+- A game started from its own shortcut, or by an earlier launcher, now counts as running, as one
+  started from the launcher does: its settings, controls and cards can only be looked at until it
+  is closed. Changes made meanwhile used to be undone when the game saved. This works with OpenGP
+  1.0.1's games, which hold `user/.lock-<ID>` while they run; 1.0.0's hold no such lock.
+- **Stop** during an install now says the install is stopping. A compiler download or a compile
+  that has already started finishes first.
+- Closing the window during an install or a build stops it first, with the window still up. The
+  launcher used to carry on with no window until the install had finished.
+
 ## 1.0.0 (2026-10-23)
 
 The first release of the OpenGP Launcher, for OpenGP 1.0.0: one window to play Mario Kart Arcade GP

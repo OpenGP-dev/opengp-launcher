@@ -22,7 +22,8 @@ add it, into `user/art/`; none are part of the launcher.
 
 The launcher builds OpenGP's own libraries (settings, controls, disc images, the installer) as part
 of itself, from the OpenGP submodule in `external/OpenGP`, so it always reads and writes the files
-exactly as the games do.
+exactly as the games do. Each launcher release goes with the OpenGP release of the same number,
+which the submodule points at: launcher 1.0.1 with OpenGP 1.0.1.
 
 You need what OpenGP needs (CMake 3.25+, Ninja, Clang or GCC; clang-cl on Windows) and **Qt 6.8 or
 later** with Qt Quick, Qt Quick Controls and Qt Network. For example, with
