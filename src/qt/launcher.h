@@ -47,6 +47,7 @@ class Launcher : public QObject {
   Q_PROPERTY(bool checking READ checking NOTIFY checkingChanged)
   Q_PROPERTY(QString buildingId READ buildingId NOTIFY buildingChanged)
   Q_PROPERTY(QString progressText READ progressText NOTIFY progressChanged)
+  Q_PROPERTY(bool stopping READ stopping NOTIFY progressChanged)  // Stop was pressed: the build is ending
   Q_PROPERTY(double progress READ progress NOTIFY progressChanged)
   Q_PROPERTY(QStringList buildLog READ buildLog NOTIFY progressChanged)
   Q_PROPERTY(QString runningId READ runningId NOTIFY runningChanged)
@@ -92,6 +93,7 @@ class Launcher : public QObject {
   bool checking() const { return checking_; }
   QString buildingId() const { return building_id_; }
   QString progressText() const { return progress_text_; }
+  bool stopping() const { return cancel_ && !building_id_.isEmpty(); }
   double progress() const { return progress_; }
   QStringList buildLog() const { return build_log_; }
   QString runningId() const { return running_id_; }

@@ -382,7 +382,7 @@ void Launcher::build(int index) {
     installer::Reporter report;
     report.line = [this](const std::string& line) {
       QMetaObject::invokeMethod(this, [this, line = qs(line)] {
-        progress_text_ = line;
+        if (!cancel_) progress_text_ = line;  // else it says the build is stopping
         build_log_ << line;
         emit progressChanged();
       }, Qt::QueuedConnection);
@@ -433,8 +433,14 @@ void Launcher::finish_build(bool ok, const QString& error) {
 }
 
 void Launcher::cancelBuild() {
+  if (building_id_.isEmpty()) return;
   cancel_ = true;
   if (cmake_) stop_tree(cmake_);
+  // The installer cannot stop the compiler's download, nor a compile, once
+  // it has started: say that Stop was taken.
+  progress_text_ = home_.package ? QStringLiteral("Stopping. A download or compile that has started finishes first.")
+                                 : QStringLiteral("Stopping");
+  emit progressChanged();
 }
 
 void Launcher::build_from_source(const Game& game, const QString& image) {
@@ -538,7 +544,7 @@ void Launcher::build_line(const QString& line) {
   if (cmake_error_.isEmpty() && line.contains(QLatin1String("error:"))) cmake_error_ = line.trimmed();
   const double fraction = ninja_progress(line.toStdString());
   if (fraction >= 0) progress_ = fraction;
-  progress_text_ = line;
+  if (!cancel_) progress_text_ = line;
   build_log_ << line;
   emit progressChanged();
 }

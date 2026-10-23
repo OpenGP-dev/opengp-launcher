@@ -165,6 +165,7 @@ Rectangle {
         // Beside the progress, not under it: the bar has room for three lines.
         PillButton {
             visible: bar.building
+            enabled: !Launcher.stopping
             text: "Stop"
             onClicked: Launcher.cancelBuild()
         }

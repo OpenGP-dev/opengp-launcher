@@ -120,6 +120,7 @@ Item {
                 PillButton {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: card.building
+                    enabled: !Launcher.stopping
                     text: "Stop"
                     onClicked: Launcher.cancelBuild()
                 }
@@ -127,6 +128,7 @@ Item {
         }
 
         function statusText() {
+            if (building && Launcher.stopping) return "Stopping"
             if (building) return Launcher.progress >= 0 ? "Building: " + Math.round(Launcher.progress * 100) + "%" : "Building"
             if (runningThis) return "Playing"
             switch (gameState) {
