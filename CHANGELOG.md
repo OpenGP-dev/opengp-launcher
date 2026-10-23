@@ -69,4 +69,6 @@ Since the launcher was first marked 1.0.0:
   typeface and SDL's scancode tables. It also says where the source code is, Qt's included.
 - An OpenGP package carries these notices as `licenses/launcher-THIRD-PARTY-NOTICES.md`, with the
   texts they point to: Qt's LGPL (`licenses/Qt-LGPL-3.0.txt`) and the typeface's licence
-  (`licenses/MPLUSRounded1c-OFL.txt`).
+  (`licenses/MPLUSRounded1c-OFL.txt`). On Linux it also has the notices of the libraries it carries
+  for Qt: the xcb-util libraries' (`licenses/xcb-util-COPYING.txt`) and ICU's
+  (`licenses/ICU-LICENSE.txt`).

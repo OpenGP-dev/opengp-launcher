@@ -136,4 +136,7 @@ OpenGP's texture decoders ported from Dolphin, the interface's typeface M PLUS R
 Font Licence, [src/fonts/OFL.txt](src/fonts/OFL.txt)), cut down to Latin letters, and SDL's scancode
 tables (zlib licence, in the file). [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) lists them with
 their notices, and says where Qt's source is. An OpenGP package carries it as
-`licenses/launcher-THIRD-PARTY-NOTICES.md`, with the licence texts it points to.
+`licenses/launcher-THIRD-PARTY-NOTICES.md`, with the licence texts it points to. On Linux a package
+also carries libraries that Qt needs, and their notices: the xcb-util libraries (MIT/X11,
+[licenses/xcb-util-COPYING.txt](licenses/xcb-util-COPYING.txt)) and ICU (Unicode licence,
+[licenses/ICU-LICENSE.txt](licenses/ICU-LICENSE.txt)).

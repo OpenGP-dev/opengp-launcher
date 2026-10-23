@@ -187,3 +187,21 @@ endif()
 install(FILES ${PROJECT_SOURCE_DIR}/THIRD-PARTY-NOTICES.md DESTINATION licenses RENAME launcher-THIRD-PARTY-NOTICES.md)
 install(FILES ${PROJECT_SOURCE_DIR}/licenses/Qt-LGPL-3.0.txt DESTINATION licenses)
 install(FILES fonts/OFL.txt DESTINATION licenses RENAME MPLUSRounded1c-OFL.txt)
+
+# On Linux, the notices of what the package carries in qt/lib besides Qt: the
+# xcb-util libraries (always, as checked above) and ICU, which Qt's own Linux
+# builds link (ICU 73) and keep in their lib folder. A Qt that uses the
+# system's ICU leaves it out, and the package then has no ICU licence either.
+if(UNIX AND NOT APPLE)
+  install(FILES ${PROJECT_SOURCE_DIR}/licenses/xcb-util-COPYING.txt DESTINATION licenses)
+  install(CODE "set(icu_license \"${PROJECT_SOURCE_DIR}/licenses/ICU-LICENSE.txt\")")
+  install(CODE [[
+    file(GLOB icu "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/qt/lib/libicuuc.so.*")
+    if(icu)
+      file(INSTALL "${icu_license}" DESTINATION "${CMAKE_INSTALL_PREFIX}/licenses")
+      if(NOT EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/qt/lib/libicuuc.so.73")
+        message(WARNING "The package has an ICU other than 73 in qt/lib, but licenses/ICU-LICENSE.txt is "
+                        "ICU 73's: replace it with the LICENSE of that ICU.")
+      endif()
+    endif()]])
+endif()

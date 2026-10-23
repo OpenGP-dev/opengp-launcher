@@ -10,9 +10,12 @@ submodule out, so clone with `--recursive`.
 A launcher binary contains the third-party work below. Each keeps its own licence. A copy of the
 launcher that is handed out must come with these notices and the licence texts they point to.
 
-OpenGP's installer packages do. There, this file is `licenses/launcher-THIRD-PARTY-NOTICES.md`, the
-GPL is the package's `LICENSE`, and the other texts are in `licenses/`: Qt's LGPL as
-`Qt-LGPL-3.0.txt`, the typeface's licence as `MPLUSRounded1c-OFL.txt`, and SDL's and toml++'s.
+OpenGP's installer packages do. On Linux they also carry libraries that Qt needs: the xcb-util
+libraries and ICU (the last two rows). In a package, this file is
+`licenses/launcher-THIRD-PARTY-NOTICES.md`, the GPL is the package's `LICENSE`, and the other texts
+are in `licenses/`: Qt's LGPL as `Qt-LGPL-3.0.txt`, the typeface's licence as
+`MPLUSRounded1c-OFL.txt`, SDL's and toml++'s, and on Linux the xcb-util libraries' notices as
+`xcb-util-COPYING.txt` and ICU's licence as `ICU-LICENSE.txt`.
 
 | Work | Licence | Where |
 |------|---------|-------|
@@ -22,6 +25,8 @@ GPL is the package's `LICENSE`, and the other texts are in `licenses/`: Qt's LGP
 | OpenGP's texture decoders, ported from [Dolphin](https://github.com/dolphin-emu/dolphin) | GPL-2.0-or-later, used under GPL-3.0 | the pictures from the player's disc image |
 | M PLUS Rounded 1c | OFL-1.1 | `src/fonts/`, the interface's typeface, built in |
 | SDL's scancode tables | zlib | `src/core/scancode_tables.cpp`, the keys pressed in the window |
+| [xcb-util](https://xcb.freedesktop.org/): libxcb-cursor, -icccm, -image, -keysyms, -render-util and -util | MIT/X11; HPND (part of render-util) | Linux packages only: `qt/lib/`, for Qt's X11 support |
+| [ICU](https://icu.unicode.org/), when Qt brings it | Unicode licence, and the notices in ICU's `LICENSE` | Linux packages only: `qt/lib/`, for Qt Core |
 
 ## Qt
 
@@ -40,7 +45,8 @@ every Qt release is at <https://download.qt.io/archive/qt/>, and in Qt's Git rep
 Qt contains third-party code of its own, such as PCRE2, HarfBuzz, FreeType, libpng and zlib,
 depending on the system and on how Qt was built. Their licences and notices are listed in "Licenses
 Used in Qt" (<https://doc.qt.io/qt-6/licenses-used-in-qt.html>), and in the `qt_attribution.json`
-files and `LICENSES/` folders of Qt's source.
+files and `LICENSES/` folders of Qt's source. The libraries Qt links on Linux that an OpenGP package
+carries with it are under "xcb-util" and "ICU" below.
 
 ## SDL 3
 
@@ -84,3 +90,25 @@ built into it.
 scancodes the games name keys by. Its tables are SDL's (`src/events/scancodes_windows.h`,
 `scancodes_linux.h` and `scancodes_darwin.h` of SDL 3.4), copied unchanged by
 `tools/gen_scancodes.py`, under the zlib licence, whose text is in the file.
+
+## xcb-util
+
+On Linux, Qt draws the launcher's window through X11 with its xcb plugin, which needs the xcb-util
+libraries. Not every desktop has them (libxcb-cursor above all), so an OpenGP package carries the
+build machine's copies in `qt/lib/`: libxcb-cursor (from xcb-util-cursor), libxcb-icccm
+(xcb-util-wm), libxcb-image (xcb-util-image), libxcb-keysyms (xcb-util-keysyms), libxcb-render-util
+(xcb-util-renderutil) and libxcb-util (xcb-util), by Michael Stapelberg, Vincent Torri, Arnaud
+Fontaine, Bart Massey, Julien Danjou, Keith Packard, Ian Osgood, Jamey Sharp, Josh Triplett and
+Ulrich Eckhardt. They are under the MIT/X11 licence, and Keith Packard's part of xcb-util-renderutil
+under an HPND licence. Each one's copyright and permission notice, as its `COPYING` file has it, is
+in [licenses/xcb-util-COPYING.txt](licenses/xcb-util-COPYING.txt).
+
+## ICU
+
+Qt Core can use ICU (International Components for Unicode), Copyright © 1991-2023 Unicode, Inc.,
+for text and locales. Qt's own Linux builds link ICU 73 and keep it in their `lib/` folder, so an
+OpenGP package built with them carries it in `qt/lib/` (libicuuc, libicui18n and libicudata). ICU is
+under the Unicode licence, and its `LICENSE` adds the notices of the third-party data and code it
+contains, such as the word break dictionaries and Google's double-conversion. ICU 73's `LICENSE` is
+in [licenses/ICU-LICENSE.txt](licenses/ICU-LICENSE.txt). A package that has no ICU in `qt/lib/`
+doesn't carry the file either.
