@@ -171,6 +171,7 @@ class Launcher : public QObject {
   bool art_running_ = false, check_again_ = false;
   QString building_id_, progress_text_, running_id_, verifying_id_;
   bool running_elsewhere_ = false;  // running_id_ is a game the launcher did not start
+  bool lock_was_free_ = false;      // and its lock was free at the last look
   double verify_progress_ = 0;
   std::set<std::string> verify_failed_;  // images that could not be read: not again until asked
   std::set<std::string> art_failed_;     // images no pictures could be made from: not again until one is added

@@ -309,6 +309,13 @@ void Launcher::check_running_elsewhere() {
   QString id;
   for (const Game& g : home_.games)
     if (id.isEmpty() && game_running(home_.user_dir, g.info.id)) id = qs(g.info.id);
+  // A game restarting itself (its test menu) lets go of its lock for a moment:
+  // it has ended only when its lock is free at two looks in a row.
+  if (!running_id_.isEmpty() && id.isEmpty() && !lock_was_free_) {
+    lock_was_free_ = true;
+    return;
+  }
+  lock_was_free_ = false;
   if (id == running_id_) return;
   if (!running_id_.isEmpty()) {
     const QString ended = std::exchange(running_id_, QString());
