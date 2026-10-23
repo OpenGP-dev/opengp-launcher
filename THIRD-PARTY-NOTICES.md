@@ -29,8 +29,9 @@ other contributors. The launcher uses Qt under the GNU Lesser General Public Lic
 `LICENSES/LGPL-3.0-only.txt`.
 
 The launcher builds against Qt 6.8 or later, with no changes to Qt, and links it as shared
-libraries, so they can be replaced with another build of the same Qt version. The source code of every Qt release is
-at <https://download.qt.io/archive/qt/>, and in Qt's Git repositories at <https://code.qt.io/>.
+libraries, so they can be replaced with another build of the same Qt version. The source code of
+every Qt release is at <https://download.qt.io/archive/qt/>, and in Qt's Git repositories at
+<https://code.qt.io/>.
 
 Qt contains third-party code of its own, such as PCRE2, HarfBuzz, FreeType, libpng and zlib,
 depending on the system and on how Qt was built. Their licences and notices are listed in "Licenses
