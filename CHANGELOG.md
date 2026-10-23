@@ -4,9 +4,10 @@
 
 The first release of the OpenGP Launcher, for OpenGP 1.0.0: one window to play Mario Kart Arcade GP
 2 and GP 1, set them up and look after them. It builds OpenGP's own libraries from the
-`external/OpenGP` submodule, so it reads and writes the games' files exactly as the games do. Like
-OpenGP, the launcher is now feature-locked: from here on, releases bring only bug fixes and design
-tweaks.
+`external/OpenGP` submodule, so it reads and writes the games' files exactly as the games do. It
+comes in OpenGP's installer packages as `OpenGP` (`OpenGP.exe`, `OpenGP.app`), the program players
+run, with the Qt it needs. Like OpenGP, the launcher is now feature-locked: from here on, releases
+bring only bug fixes and design tweaks.
 
 Known issue: on Windows, the launcher, like OpenGP 1.0.0, doesn't work when the path of OpenGP's
 folder, or of a disc image you give it, has any character other than A to Z, digits and simple

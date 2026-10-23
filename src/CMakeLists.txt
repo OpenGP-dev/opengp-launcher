@@ -89,3 +89,79 @@ set_target_properties(opengp_launcher PROPERTIES
   MACOSX_BUNDLE_GUI_IDENTIFIER dev.opengp.launcher
   MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
   MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION})
+
+# Installing: what an OpenGP installer package holds of the launcher, laid out
+# by `cmake --install <build> --prefix <package folder>` (OpenGP's package
+# workflow). OpenGP (OpenGP.exe, OpenGP.app) goes at the top of the package:
+# it finds the package by sdk/package.toml next to itself.
+install(TARGETS opengp_launcher BUNDLE DESTINATION . RUNTIME DESTINATION .)
+
+# The Qt it needs, by Qt's own deployment script: windeployqt on Windows,
+# macdeployqt on macOS (into OpenGP.app), and on Linux the Qt libraries it
+# links, their plugins and the QML modules it imports. Outside OpenGP.app they
+# go in qt/, except that on Windows the libraries go next to OpenGP.exe, where
+# Windows finds them; qt.conf next to the launcher says where the rest are. No
+# translations (the launcher is in English), and not windeployqt's compiler
+# runtime: the Visual C++ runtime is installed below.
+if(NOT APPLE)
+  if(WIN32)
+    set(qt_lib_dir .)
+  else()
+    set(qt_lib_dir qt/lib)
+    # Only qt/lib, in the package: not Qt's default $ORIGIN/../lib.
+    set_target_properties(opengp_launcher PROPERTIES INSTALL_RPATH "$ORIGIN/qt/lib")
+    # Qt's deployment takes the plugins Qt marks as defaults, and of the
+    # platforms that is only xcb. Also: offscreen (--smoke-test and
+    # --screenshot-ui without a display), input methods (compose keys, IBus)
+    # and the desktop portal's file dialogs, each if this Qt has them. Not QML
+    # debugging, nor EGLFS's devices. Not Wayland: its window shells are
+    # plugins of Qt Wayland Client, which the launcher doesn't link, so the
+    # deployment would leave them out, and without them Qt can't use Wayland
+    # (it falls back to xcb, or doesn't start with QT_QPA_PLATFORM=wayland).
+    # On a Wayland desktop the launcher runs through XWayland.
+    set(extra_plugins "")
+    foreach(plugin QOffscreenIntegrationPlugin QComposePlatformInputContextPlugin QIbusPlatformInputContextPlugin
+                   QXdgDesktopPortalThemePlugin)
+      if(TARGET Qt6::${plugin})
+        list(APPEND extra_plugins Qt6::${plugin})
+      endif()
+    endforeach()
+    qt_import_plugins(opengp_launcher INCLUDE ${extra_plugins}
+                      EXCLUDE Qt6::QWaylandIntegrationPlugin Qt6::QWaylandEglPlatformIntegrationPlugin
+                      EXCLUDE_BY_TYPE qmltooling egldeviceintegrations)
+    # The libraries of the system stay the player's, except the X11 helpers
+    # Qt's xcb plugin needs that not every desktop has (libxcb-cursor0 above
+    # all): those come from the build machine, if it has them.
+    set(system_libs_bundled "/libxcb-cursor[.]so" "/libxcb-icccm[.]so" "/libxcb-image[.]so" "/libxcb-keysyms[.]so"
+                            "/libxcb-render-util[.]so" "/libxcb-util[.]so")
+  endif()
+  install(CODE "
+    set(QT_DEPLOY_BIN_DIR .)
+    set(QT_DEPLOY_LIB_DIR ${qt_lib_dir})
+    set(QT_DEPLOY_PLUGINS_DIR qt/plugins)
+    set(QT_DEPLOY_QML_DIR qt/qml)")
+endif()
+qt_generate_deploy_qml_app_script(TARGET opengp_launcher OUTPUT_SCRIPT deploy_script
+                                  NO_TRANSLATIONS NO_COMPILER_RUNTIME POST_INCLUDE_REGEXES ${system_libs_bundled})
+install(SCRIPT ${deploy_script})
+
+if(APPLE)
+  # macdeployqt rewrites the libraries it copies into OpenGP.app, which breaks
+  # their signatures, and on Apple silicon macOS runs no code without a valid
+  # one: the whole app is signed again, ad hoc.
+  install(CODE [[
+    execute_process(COMMAND codesign --force --deep --sign - "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/OpenGP.app"
+                    COMMAND_ERROR_IS_FATAL ANY)]])
+endif()
+
+# Windows: the Visual C++ runtime next to OpenGP.exe, so that players need no
+# redistributable (clang-cl's builds use it too).
+if(WIN32)
+  set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
+  include(InstallRequiredSystemLibraries)
+endif()
+
+# The launcher's licences that the package doesn't already have (it has the
+# GPL as LICENSE, and SDL's and toml++'s in licenses/).
+install(FILES ${PROJECT_SOURCE_DIR}/THIRD-PARTY-NOTICES.md DESTINATION licenses RENAME launcher-THIRD-PARTY-NOTICES.md)
+install(FILES fonts/OFL.txt DESTINATION licenses RENAME MPLUSRounded1c-OFL.txt)
