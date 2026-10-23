@@ -41,9 +41,8 @@ fs::path default_home(const fs::path& exe_dir, const fs::path& fallback);
 
 // Whether a package folder can be written to (the games, their builds and
 // the saves all go there): if not, `error` says where to move it, in the
-// words of OpenGP's installer. Not installer::check_writable: in a new
-// package (no build/ yet) that it cannot write to, that one gives a missing
-// folder as the reason.
+// words of OpenGP's installer::check_writable and with the same reason (in a
+// new package, with no build/ yet, the permission, not the missing folder).
 bool check_writable(const fs::path& dir, std::string* error);
 
 // A path as UTF-8 text (std::filesystem would use the system's code page on
