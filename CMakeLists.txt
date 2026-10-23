@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
+# macOS 13 or later, as OpenGP's macOS package (other systems ignore it).
+# Without it a build would not open on a macOS older than the one it was
+# built on. Before project(), so it applies; -D overrides it.
+set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "The oldest macOS the launcher runs on")
 project(OpenGPLauncher VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
