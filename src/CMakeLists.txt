@@ -113,25 +113,38 @@ if(NOT APPLE)
     set(qt_lib_dir qt/lib)
     # Only qt/lib, in the package: not Qt's default $ORIGIN/../lib.
     set_target_properties(opengp_launcher PROPERTIES INSTALL_RPATH "$ORIGIN/qt/lib")
-    # Qt's deployment takes the plugins Qt marks as defaults, and of the
-    # platforms that is only xcb. Also: offscreen (--smoke-test and
-    # --screenshot-ui without a display), input methods (compose keys, IBus)
-    # and the desktop portal's file dialogs, each if this Qt has them. Not QML
-    # debugging, nor EGLFS's devices. Not Wayland: its window shells are
-    # plugins of Qt Wayland Client, which the launcher doesn't link, so the
-    # deployment would leave them out, and without them Qt can't use Wayland
-    # (it falls back to xcb, or doesn't start with QT_QPA_PLATFORM=wayland).
-    # On a Wayland desktop the launcher runs through XWayland.
-    set(extra_plugins "")
-    foreach(plugin QOffscreenIntegrationPlugin QComposePlatformInputContextPlugin QIbusPlatformInputContextPlugin
-                   QXdgDesktopPortalThemePlugin)
-      if(TARGET Qt6::${plugin})
-        list(APPEND extra_plugins Qt6::${plugin})
-      endif()
-    endforeach()
-    qt_import_plugins(opengp_launcher INCLUDE ${extra_plugins}
-                      EXCLUDE Qt6::QWaylandIntegrationPlugin Qt6::QWaylandEglPlatformIntegrationPlugin
-                      EXCLUDE_BY_TYPE qmltooling egldeviceintegrations)
+    # The plugins: of the platforms, xcb (Qt's default) and offscreen
+    # (--smoke-test and --screenshot-ui without a display), with input methods
+    # (compose keys, IBus) and the desktop portal's file dialogs, each if this
+    # Qt has them. Not QML debugging, nor EGLFS's devices. Not Wayland: its
+    # window shells are plugins of Qt Wayland Client, which the launcher
+    # doesn't link, so the deployment would leave them out, and without them
+    # Qt can't use Wayland (it falls back to xcb, or doesn't start with
+    # QT_QPA_PLATFORM=wayland). On a Wayland desktop the launcher runs through
+    # XWayland.
+    if(Qt6_VERSION VERSION_GREATER_EQUAL 6.10)
+      # From Qt 6.10 the deployment ignores qt_import_plugins(). It takes every
+      # plugin of each type the Qt libraries use (hence the types left out
+      # here), but of the platforms only those this Qt was built to deploy:
+      # xcb, in Qt's own builds. These options are new in 6.10.
+      # EXCLUDE_PLUGINS would do nothing: 6.10.3 doesn't apply it.
+      set(plugin_options INCLUDE_PLUGINS qoffscreen composeplatforminputcontextplugin ibusplatforminputcontextplugin
+                                         qxdgdesktopportal
+                         EXCLUDE_PLUGIN_TYPES qmltooling egldeviceintegrations)
+    else()
+      # Before 6.10 it takes the plugins Qt marks as defaults (of the
+      # platforms, only xcb), as qt_import_plugins() changes them.
+      set(extra_plugins "")
+      foreach(plugin QOffscreenIntegrationPlugin QComposePlatformInputContextPlugin QIbusPlatformInputContextPlugin
+                     QXdgDesktopPortalThemePlugin)
+        if(TARGET Qt6::${plugin})
+          list(APPEND extra_plugins Qt6::${plugin})
+        endif()
+      endforeach()
+      qt_import_plugins(opengp_launcher INCLUDE ${extra_plugins}
+                        EXCLUDE Qt6::QWaylandIntegrationPlugin Qt6::QWaylandEglPlatformIntegrationPlugin
+                        EXCLUDE_BY_TYPE qmltooling egldeviceintegrations)
+    endif()
     # The libraries of the system stay the player's, except the X11 helpers
     # Qt's xcb plugin needs that not every desktop has (libxcb-cursor0 above
     # all): those come from the build machine (checked below).
@@ -146,7 +159,7 @@ if(NOT APPLE)
 endif()
 qt_generate_deploy_qml_app_script(TARGET opengp_launcher OUTPUT_SCRIPT deploy_script
                                   NO_TRANSLATIONS NO_COMPILER_RUNTIME POST_INCLUDE_REGEXES ${system_libs_bundled}
-                                  ${deploy_tool_options})
+                                  ${plugin_options} ${deploy_tool_options})
 install(SCRIPT ${deploy_script})
 
 if(UNIX AND NOT APPLE)
