@@ -106,6 +106,9 @@ install(TARGETS opengp_launcher BUNDLE DESTINATION . RUNTIME DESTINATION .)
 if(NOT APPLE)
   if(WIN32)
     set(qt_lib_dir .)
+    # Not windeployqt's software OpenGL (opengl32sw.dll, Mesa's): Qt Quick draws
+    # with Direct3D 11 on Windows, not OpenGL.
+    set(deploy_tool_options DEPLOY_TOOL_OPTIONS --no-opengl-sw)
   else()
     set(qt_lib_dir qt/lib)
     # Only qt/lib, in the package: not Qt's default $ORIGIN/../lib.
@@ -142,7 +145,8 @@ if(NOT APPLE)
     set(QT_DEPLOY_QML_DIR qt/qml)")
 endif()
 qt_generate_deploy_qml_app_script(TARGET opengp_launcher OUTPUT_SCRIPT deploy_script
-                                  NO_TRANSLATIONS NO_COMPILER_RUNTIME POST_INCLUDE_REGEXES ${system_libs_bundled})
+                                  NO_TRANSLATIONS NO_COMPILER_RUNTIME POST_INCLUDE_REGEXES ${system_libs_bundled}
+                                  ${deploy_tool_options})
 install(SCRIPT ${deploy_script})
 
 if(UNIX AND NOT APPLE)
