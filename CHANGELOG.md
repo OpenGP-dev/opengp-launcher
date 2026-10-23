@@ -1,9 +1,11 @@
 # Changelog
 
-## 1.0.1 (not released yet)
+## 1.0.1 (2026-11-02)
 
-Launcher 1.0.1 goes with OpenGP 1.0.1: it is built on OpenGP 1.0.1's code, so it reads and writes
-the games' files as the 1.0.1 games do. It still opens an OpenGP 1.0.0 package folder.
+The first public release of the OpenGP Launcher, with OpenGP 1.0.1: it comes in OpenGP 1.0.1's
+installer packages as `OpenGP` (`OpenGP.exe`, `OpenGP.app`). Launcher 1.0.1 is 1.0.0, an internal
+release whose notes follow, with the fixes below. It is built on OpenGP 1.0.1's code, so it reads
+and writes the games' files as the 1.0.1 games do. It still opens an OpenGP 1.0.0 package folder.
 
 ### Fixes
 
