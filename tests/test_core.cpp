@@ -339,7 +339,7 @@ TEST_CASE("a game started elsewhere is running while it holds its lock") {
   // One left by a game that has ended.
   write(user / ".lock-GGPE01", "");
   CHECK_FALSE(game_running(user, "GGPE01"));
-  // Held as a running game holds it (until this test ends).
+  // Held as a running game holds it (until test_core exits).
   REQUIRE(app::lock_user_dir(user, "GGPE02"));
   CHECK(game_running(user, "GGPE02"));
   CHECK_FALSE(game_running(user, "GGPE01"));
