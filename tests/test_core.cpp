@@ -330,6 +330,21 @@ TEST_CASE("a game that restarts itself is followed until it really ends") {
   CHECK_FALSE(missing.start(utf8(dir.path / "no-such-game"), {}, log, &error));
 }
 
+TEST_CASE("a game started elsewhere is running while it holds its lock") {
+  TempDir dir("opengp_launcher_running");
+  const fs::path user = dir.path / "user";
+  // No lock file: no game, and no file made.
+  CHECK_FALSE(game_running(user, "GGPE02"));
+  CHECK_FALSE(fs::exists(user / ".lock-GGPE02"));
+  // One left by a game that has ended.
+  write(user / ".lock-GGPE01", "");
+  CHECK_FALSE(game_running(user, "GGPE01"));
+  // Held as a running game holds it (until this test ends).
+  REQUIRE(app::lock_user_dir(user, "GGPE02"));
+  CHECK(game_running(user, "GGPE02"));
+  CHECK_FALSE(game_running(user, "GGPE01"));
+}
+
 TEST_CASE("a source tree's game is built with CMake from the player's image") {
   TempDir dir("opengp_launcher_source_build");
   const fs::path src = dir.path / "src";

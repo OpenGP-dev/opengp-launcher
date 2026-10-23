@@ -11,6 +11,7 @@
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QQmlEngine>
+#include <QTimer>
 
 #ifndef _WIN32
 #include <signal.h>
@@ -103,6 +104,14 @@ Launcher::Launcher(Home home, QString home_error, QString prefs_path, QObject* p
   games_.reset(std::move(entries));
   current_ = std::max(0, row_of(qs(prefs_.game)));
   refresh();
+  if (!home_.games.empty()) {
+    auto* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &Launcher::check_running_elsewhere);
+    timer->start(1000);
+    // The first look once the event loop runs, when the settings and
+    // controls are listening.
+    QMetaObject::invokeMethod(this, &Launcher::check_running_elsewhere, Qt::QueuedConnection);
+  }
 }
 
 Launcher::~Launcher() {
@@ -292,6 +301,26 @@ void Launcher::game_ended(const QString& id, int exit_code, bool crashed) {
   if (end.error) {
     emit raiseRequested();  // with "On launch: Minimize", the launcher is out of sight
     emit message(qs(end.text), true);
+  }
+}
+
+void Launcher::check_running_elsewhere() {
+  if (!running_id_.isEmpty() && !running_elsewhere_) return;  // the launcher's own: it sees that end
+  QString id;
+  for (const Game& g : home_.games)
+    if (id.isEmpty() && game_running(home_.user_dir, g.info.id)) id = qs(g.info.id);
+  if (id == running_id_) return;
+  if (!running_id_.isEmpty()) {
+    const QString ended = std::exchange(running_id_, QString());
+    running_elsewhere_ = false;
+    emit runningChanged();
+    emit gameEnded(ended);
+  }
+  if (!id.isEmpty()) {
+    emit gameStarting(id);
+    running_id_ = id;
+    running_elsewhere_ = true;
+    emit runningChanged();
   }
 }
 

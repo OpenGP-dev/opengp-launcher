@@ -135,6 +135,10 @@ class Launcher : public QObject {
   void make_missing_art();
   void set_image_error(int row, const QString& error);
   void game_ended(const QString& id, int exit_code, bool crashed);
+  // A game started elsewhere (its shortcut, an earlier launcher) counts as
+  // running too, while it holds its lock: the launcher's changes to its
+  // settings and cards would be undone when it saves.
+  void check_running_elsewhere();
   void finish_build(bool ok, const QString& error);
   // A source tree's games, built with CMake (see core/source_build.h).
   void build_from_source(const Game& game, const QString& image);
@@ -164,6 +168,7 @@ class Launcher : public QObject {
   std::atomic<bool> cancel_{false}, stop_verify_{false};
   bool art_running_ = false, check_again_ = false;
   QString building_id_, progress_text_, running_id_, verifying_id_;
+  bool running_elsewhere_ = false;  // running_id_ is a game the launcher did not start
   double verify_progress_ = 0;
   std::set<std::string> verify_failed_;  // images that could not be read: not again until asked
   std::set<std::string> art_failed_;     // images no pictures could be made from: not again until one is added
