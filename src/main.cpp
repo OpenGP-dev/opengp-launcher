@@ -240,8 +240,7 @@ int main(int argc, char** argv) {
   auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
 
   // Problems with the games' settings or controls files: the launcher reads
-  // them first (and sets an unreadable controls.toml aside), so it says so,
-  // not only on its Settings and Controls pages.
+  // them first, so it says so, not only on its Settings and Controls pages.
   if (launcher.homeError().isEmpty()) {
     QStringList problems;
     for (const QString& p : {settings.error(), settings.warning(), controls.error()})

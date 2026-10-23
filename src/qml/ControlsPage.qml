@@ -9,6 +9,7 @@ ScrollView {
     contentWidth: availableWidth
     clip: true
     readonly property var devices: ["Keyboard", "Gamepad", "Wheel and other controllers"]
+    readonly property bool editable: !Controls.locked && !Controls.loadFailed
 
     ColumnLayout {
         x: 36
@@ -18,8 +19,10 @@ ScrollView {
         Text {
             Layout.fillWidth: true
             Layout.topMargin: 8
-            visible: Controls.locked
-            text: "A game is running and has the controllers. Close it to change the controls."
+            visible: !page.editable
+            text: Controls.locked ? "A game is running and has the controllers. Close it to change the controls."
+                : "The controls file can't be read, so the games are using the default controls. "
+                  + "To change them, restore the defaults: the old file is kept as controls.toml.bad."
             color: Theme.dim
             font.family: Theme.family
             font.pixelSize: Theme.body
@@ -122,6 +125,7 @@ ScrollView {
                                     id: removeArea
                                     anchors.fill: parent
                                     anchors.margins: -6
+                                    enabled: page.editable
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: Controls.removeBinding(row.modelData.control, chip.index)
@@ -158,7 +162,7 @@ ScrollView {
                         visible: !row.capturing
                         height: 30
                         text: "Add"
-                        enabled: !Controls.locked && Controls.capturing < 0
+                        enabled: page.editable && Controls.capturing < 0
                         onClicked: Controls.startCapture(row.modelData.control)
                     }
                 }
@@ -171,6 +175,7 @@ ScrollView {
             label: "Steering speed"
             help: "How fast keys turn the wheel: full turns a second."
             visible: Controls.device === 0
+            enabled: page.editable
             ValueSlider {
                 from: 0.5; to: 10; stepSize: 0.5
                 value: Controls.steerSpeed
@@ -182,6 +187,7 @@ ScrollView {
             label: "Dead zone"
             help: "How far a stick or wheel moves before the game sees it."
             visible: Controls.device > 0
+            enabled: page.editable
             ValueSlider {
                 from: 0; to: 0.5; stepSize: 0.01
                 value: Controls.deadzone
@@ -193,6 +199,7 @@ ScrollView {
             label: "Force feedback"
             help: "How hard wheels push back, and how strongly gamepads rumble."
             visible: Controls.device > 0
+            enabled: page.editable
             ValueSlider {
                 from: 0; to: 2; stepSize: 0.05
                 value: Controls.forceFeedback
@@ -203,6 +210,7 @@ ScrollView {
         SettingRow {
             label: "Use the controls in the background too"
             help: "Every OpenGP window reads the controls, active or not, to drive several cabinets on one computer."
+            enabled: page.editable
             Toggle { checked: Controls.backgroundInput; onToggled: Controls.backgroundInput = checked }
         }
         Text {
