@@ -30,9 +30,10 @@ the games' files as the 1.0.1 games do. It still opens an OpenGP 1.0.0 package f
 
 The first release of the OpenGP Launcher, for OpenGP 1.0.0: one window to play Mario Kart Arcade GP
 2 and GP 1, set them up and look after them. It builds OpenGP's own libraries from the
-`external/OpenGP` submodule, so it reads and writes the games' files exactly as the games do. Like
-OpenGP, the launcher is now feature-locked: from here on, releases bring only bug fixes and design
-tweaks.
+`external/OpenGP` submodule, so it reads and writes the games' files exactly as the games do. It
+comes in OpenGP's installer packages as `OpenGP` (`OpenGP.exe`, `OpenGP.app`), the program players
+run, with the Qt it needs. Like OpenGP, the launcher is now feature-locked: from here on, releases
+bring only bug fixes and design tweaks.
 
 Known issue: on Windows, the launcher, like OpenGP 1.0.0, doesn't work when the path of OpenGP's
 folder, or of a disc image you give it, has any character other than A to Z, digits and simple
@@ -92,3 +93,8 @@ Since the launcher was first marked 1.0.0:
 - `THIRD-PARTY-NOTICES.md` lists the third-party work in a launcher, with its licences and
   notices: Qt 6, SDL 3, toml++, OpenGP's texture decoders ported from Dolphin, the M PLUS Rounded 1c
   typeface and SDL's scancode tables. It also says where the source code is, Qt's included.
+- An OpenGP package carries these notices as `licenses/launcher-THIRD-PARTY-NOTICES.md`, with the
+  texts they point to: Qt's LGPL (`licenses/Qt-LGPL-3.0.txt`) and the typeface's licence
+  (`licenses/MPLUSRounded1c-OFL.txt`). On Linux it also has the notices of the libraries it carries
+  for Qt: the xcb-util libraries' (`licenses/xcb-util-COPYING.txt`) and ICU's
+  (`licenses/ICU-LICENSE.txt`).

@@ -47,18 +47,40 @@ Options:
 | CMake variable | |
 |---|---|
 | `OPENGP_SOURCE_DIR` | another OpenGP checkout instead of the submodule (to work on both at once) |
-| `LAUNCHER_DEV_HOME` | the OpenGP folder a development build looks after (default: `OPENGP_SOURCE_DIR`) |
+| `LAUNCHER_DEV_HOME` | the OpenGP folder a development build looks after (default: `OPENGP_SOURCE_DIR`; empty for a release) |
 | `LAUNCHER_NEWS_URL` | the news feed (`news.toml`); empty for none |
+
+OpenGP's package workflow builds the launcher for each installer package, from the OpenGP release it
+packages, and installs it into the package folder. `OpenGP` (`OpenGP.exe`, `OpenGP.app`) goes at the
+top, with the Qt it needs, the Visual C++ runtime on Windows, and its licences in `licenses/`. Qt's
+own deployment does the Qt part: windeployqt on Windows, macdeployqt on macOS (into `OpenGP.app`),
+and on Linux the libraries, plugins and QML modules in `qt/`, with `qt.conf` next to the launcher.
+On Linux the launcher uses X11 (XWayland on a Wayland desktop). The package carries the xcb-util
+libraries that Qt needs and not every desktop has, so the build machine needs them, or the install
+stops: `libxcb-cursor0`, `libxcb-icccm4`, `libxcb-image0`, `libxcb-keysyms1`, `libxcb-render-util0`
+and `libxcb-util1`. A release build has no development folder to fall back on, so outside a package
+it looks only in its own folder:
+
+```sh
+cmake -B build/release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=<Qt>/<version>/<kit> \
+  -DLAUNCHER_DEV_HOME= -DLAUNCHER_NEWS_URL= -DOPENGP_SOURCE_DIR=<the OpenGP release being packaged>
+# Windows: in OpenGP's dev shell, add -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl
+cmake --build build/release
+cmake --install build/release --prefix <the package folder>
+```
 
 ## Running
 
-In an installed OpenGP package the launcher is `OpenGP` (`OpenGP.exe`, `OpenGP.app`) and looks after
-the folder it is in. A development build looks after `LAUNCHER_DEV_HOME`, which is an OpenGP source
-tree: it plays the games CMake built there (`build/*/games/`), and its Build button builds them
-there with CMake (`source_build`): it puts the game's `main.dol` from your disc image in `orig/`,
-configures the tree (the `default` preset, `clang-cl` on Windows, or the build folder already
-there) and builds the game, with CMake's output in `build/<preset>/launcher-build.log`. On
-Windows, start the launcher from OpenGP's dev shell (`tools/devshell.ps1`) so CMake finds clang-cl.
+In an installed OpenGP package the launcher is `OpenGP` (`OpenGP.exe`, `OpenGP.app`), the program
+players run, and looks after the folder it is in: it builds each game there from the player's disc
+image with OpenGP's installer code, which on Windows also downloads the compiler. The package's
+console installer, for the command line, is `opengp-install` (`opengp-install.exe`) next to it. A
+development build looks after `LAUNCHER_DEV_HOME`, which is an OpenGP source tree: it plays the
+games CMake built there (`build/*/games/`), and its Build button builds them there with CMake
+(`source_build`): it puts the game's `main.dol` from your disc image in `orig/`, configures the tree
+(the `default` preset, `clang-cl` on Windows, or the build folder already there) and builds the
+game, with CMake's output in `build/<preset>/launcher-build.log`. On Windows, start the launcher
+from OpenGP's dev shell (`tools/devshell.ps1`) so CMake finds clang-cl.
 
 ```
 OpenGP [--home DIR] [--user-dir DIR] [--game ID] [--play] [IMAGE...]
@@ -107,11 +129,16 @@ tweaks. Besides what is above:
 ## Licence
 
 Copyright (C) 2026 the OpenGP contributors. GPL-3.0-or-later, like OpenGP ([LICENSE](LICENSE)). The
-source code is this repository and OpenGP at the commit `external/OpenGP` points to.
+source code is this repository and OpenGP: the commit `external/OpenGP` points to or, for the
+launcher in an OpenGP package, the OpenGP release the package comes from.
 
-A launcher also contains third-party work, each under its own licence: Qt 6 (LGPL-3.0), SDL 3 with
-HIDAPI and yuv2rgb, toml++, OpenGP's texture decoders ported from Dolphin, the interface's typeface
-M PLUS Rounded 1c (SIL Open Font Licence, [src/fonts/OFL.txt](src/fonts/OFL.txt)), cut down to Latin
-letters, and SDL's scancode tables (zlib licence, in the file).
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) lists them with their notices, and says where Qt's
-source is.
+A launcher also contains third-party work, each under its own licence: Qt 6 (LGPL-3.0,
+[licenses/Qt-LGPL-3.0.txt](licenses/Qt-LGPL-3.0.txt)), SDL 3 with HIDAPI and yuv2rgb, toml++,
+OpenGP's texture decoders ported from Dolphin, the interface's typeface M PLUS Rounded 1c (SIL Open
+Font Licence, [src/fonts/OFL.txt](src/fonts/OFL.txt)), cut down to Latin letters, and SDL's scancode
+tables (zlib licence, in the file). [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) lists them with
+their notices, and says where Qt's source is. An OpenGP package carries it as
+`licenses/launcher-THIRD-PARTY-NOTICES.md`, with the licence texts it points to. On Linux a package
+also carries libraries that Qt needs, and their notices: the xcb-util libraries (MIT/X11,
+[licenses/xcb-util-COPYING.txt](licenses/xcb-util-COPYING.txt)) and ICU (Unicode licence,
+[licenses/ICU-LICENSE.txt](licenses/ICU-LICENSE.txt)).
