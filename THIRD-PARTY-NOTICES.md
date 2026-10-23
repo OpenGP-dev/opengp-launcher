@@ -3,9 +3,11 @@
 The OpenGP Launcher is Copyright (C) 2026 the OpenGP contributors, and is licensed under the GNU
 General Public License, version 3 or (at your option) any later version (see [LICENSE](LICENSE)).
 Its source code is this repository, <https://github.com/OpenGP-dev/opengp-launcher>, together with
-OpenGP (<https://github.com/OpenGP-dev/OpenGP>) at the commit its `external/OpenGP` submodule points
-to: the launcher builds OpenGP's libraries as part of itself. GitHub's source archives leave the
-submodule out, so clone with `--recursive`.
+OpenGP (<https://github.com/OpenGP-dev/OpenGP>): the launcher builds OpenGP's libraries as part of
+itself. Built from this repository alone, it uses the OpenGP that its `external/OpenGP` submodule
+points to; GitHub's source archives leave the submodule out, so clone with `--recursive`. The
+launcher in an OpenGP installer package is built from the OpenGP release the package comes from, so
+there the OpenGP part of its source is that release. `OpenGP --version` names both versions.
 
 A launcher binary contains the third-party work below. Each keeps its own licence. A copy of the
 launcher that is handed out must come with these notices and the licence texts they point to.

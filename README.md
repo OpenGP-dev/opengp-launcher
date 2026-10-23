@@ -128,7 +128,8 @@ tweaks. Besides what is above:
 ## Licence
 
 Copyright (C) 2026 the OpenGP contributors. GPL-3.0-or-later, like OpenGP ([LICENSE](LICENSE)). The
-source code is this repository and OpenGP at the commit `external/OpenGP` points to.
+source code is this repository and OpenGP: the commit `external/OpenGP` points to or, for the
+launcher in an OpenGP package, the OpenGP release the package comes from.
 
 A launcher also contains third-party work, each under its own licence: Qt 6 (LGPL-3.0,
 [licenses/Qt-LGPL-3.0.txt](licenses/Qt-LGPL-3.0.txt)), SDL 3 with HIDAPI and yuv2rgb, toml++,
