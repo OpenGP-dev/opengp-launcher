@@ -19,26 +19,11 @@ bool compressed(const fs::path& path) {
   return ext == ".rvz" || ext == ".gcz" || ext == ".wia" || ext == ".ciso" || ext == ".wbfs";
 }
 
-// Why a file is not an image of a game OpenGP supports, in the words of
-// OpenGP's installer (from 1.0.1; OpenGP 1.0.0 does not say).
-std::string why_not_supported(const installer::Package& package, const std::string& image) {
-  std::error_code ec;
-  const fs::path path = os::utf8_path(image);
-  if (!fs::is_regular_file(path, ec)) return "no such file; skipped";
-  if (compressed(path)) return "a compressed image; convert it to .iso with Dolphin (see ISO/README.txt)";
-  disc::Image img;
-  if (!img.open(image, nullptr)) return "not a GameCube or Triforce disc image; skipped";
-  std::string supported;
-  for (const installer::GameInfo& g : package.games) supported += (supported.empty() ? "" : " or ") + g.id;
-  return "its game is " + img.game_id() + ", not a supported release (OpenGP needs " + supported +
-         ", the USA releases); skipped";
-}
-
 // The images the installer would find (the one each game was installed
 // from, then any in ISO/ and private/), with a line in `skipped` for each
-// file there that is not one. Not OpenGP 1.0.0's find_images: that throws
-// at a folder it cannot read, and with no OpenGP folder it would look in
-// the working folder's ISO/ and private/ (/private, for an app on macOS).
+// file there that is not one. Not OpenGP's find_images: with no OpenGP
+// folder it would look in the working folder's ISO/ and private/ (/private,
+// for an app on macOS).
 std::vector<std::pair<const installer::GameInfo*, std::string>> find_images(const installer::Package& package,
                                                                             std::vector<std::string>* skipped) {
   std::vector<std::pair<const installer::GameInfo*, std::string>> found;
@@ -68,7 +53,7 @@ std::vector<std::pair<const installer::GameInfo*, std::string>> find_images(cons
       if (const installer::GameInfo* g = installer::identify_image(package, image)) {
         if (!have(g)) found.emplace_back(g, image);
       } else if (skipped) {
-        skipped->push_back(utf8(it->path().filename()) + ": " + why_not_supported(package, image));
+        skipped->push_back(utf8(it->path().filename()) + ": " + installer::why_not_supported(package, image));
       }
     }
   }
@@ -121,7 +106,7 @@ bool add_image(const Home& home, const std::string& image, std::string* game_id,
   disc::Image img;
   std::string err;
   if (!img.open(image, &err)) {
-    std::string why = why_not_supported(home.pkg, image);
+    std::string why = installer::why_not_supported(home.pkg, image);
     const std::string skipped = "; skipped";
     if (why.size() > skipped.size() && why.compare(why.size() - skipped.size(), skipped.size(), skipped) == 0)
       why.resize(why.size() - skipped.size());
