@@ -1,13 +1,14 @@
 # Third-party notices
 
 The OpenGP Launcher is Copyright (C) 2026 the OpenGP contributors, and is licensed under the GNU
-General Public License, version 3 or (at your option) any later version (see [LICENSE](LICENSE)).
-Its source code is this repository, <https://github.com/OpenGP-dev/opengp-launcher>, together with
-OpenGP (<https://github.com/OpenGP-dev/OpenGP>): the launcher builds OpenGP's libraries as part of
-itself. Built from this repository alone, it uses the OpenGP that its `external/OpenGP` submodule
-points to; GitHub's source archives leave the submodule out, so clone with `--recursive`. The
-launcher in an OpenGP installer package is built from the OpenGP release the package comes from, so
-there the OpenGP part of its source is that release. `OpenGP --version` names both versions.
+General Public License, version 3 or (at your option) any later version (see `LICENSE`, at the top
+of this repository and of an OpenGP package). Its source code is this repository,
+<https://github.com/OpenGP-dev/opengp-launcher>, together with OpenGP
+(<https://github.com/OpenGP-dev/OpenGP>): the launcher builds OpenGP's libraries as part of itself.
+Built from this repository alone, it uses the OpenGP that its `external/OpenGP` submodule points to;
+GitHub's source archives leave the submodule out, so clone with `--recursive`. The launcher in an
+OpenGP installer package is built from the OpenGP release the package comes from, so there the
+OpenGP part of its source is that release. `OpenGP --version` names both versions.
 
 A launcher binary contains the third-party work below. Each keeps its own licence. A copy of the
 launcher that is handed out must come with these notices and the licence texts they point to.
@@ -35,9 +36,9 @@ are in `licenses/`: Qt's LGPL as `Qt-LGPL-3.0.txt`, the typeface's licence as
 The launcher's interface is built with Qt 6 (Qt Core, Qt Gui, Qt Network, Qt Qml, Qt Quick and Qt
 Quick Controls, with the libraries and plugins they need), Copyright (C) The Qt Company Ltd. and
 other contributors. The launcher uses Qt under the GNU Lesser General Public License, version 3
-(LGPL-3.0). That is the GNU GPL version 3 ([LICENSE](LICENSE)) with the extra permissions in
-[licenses/Qt-LGPL-3.0.txt](licenses/Qt-LGPL-3.0.txt), as Qt's source has them in
-`LICENSES/LGPL-3.0-only.txt` (also at <https://www.gnu.org/licenses/lgpl-3.0.html>).
+(LGPL-3.0). That is the GNU GPL version 3 (`LICENSE`) with the extra permissions in
+`licenses/Qt-LGPL-3.0.txt` (the same paths in this repository and in a package), as Qt's source has
+them in `LICENSES/LGPL-3.0-only.txt` (also at <https://www.gnu.org/licenses/lgpl-3.0.html>).
 
 The launcher builds against Qt 6.8 or later, with no changes to Qt, and links it as shared
 libraries, so they can be replaced with another build of the same Qt version. The source code of
@@ -83,8 +84,8 @@ option) any later version. The launcher uses them under version 3, as that licen
 
 The interface's typeface, M PLUS Rounded 1c (Regular and ExtraBold), is Copyright 2016 The Rounded
 M+ Project Authors, and is licensed under the SIL Open Font License, version 1.1
-([src/fonts/OFL.txt](src/fonts/OFL.txt)). The launcher's copies are cut down to Latin letters and are
-built into it.
+(`src/fonts/OFL.txt` in this repository, `licenses/MPLUSRounded1c-OFL.txt` in a package). The
+launcher's copies are cut down to Latin letters and are built into it.
 
 ## SDL's scancode tables
 
@@ -103,7 +104,7 @@ build machine's copies in `qt/lib/`: libxcb-cursor (from xcb-util-cursor), libxc
 Fontaine, Bart Massey, Julien Danjou, Keith Packard, Ian Osgood, Jamey Sharp, Josh Triplett and
 Ulrich Eckhardt. They are under the MIT/X11 licence, and Keith Packard's part of xcb-util-renderutil
 under an HPND licence. Each one's copyright and permission notice, as its `COPYING` file has it, is
-in [licenses/xcb-util-COPYING.txt](licenses/xcb-util-COPYING.txt).
+in `licenses/xcb-util-COPYING.txt`, in this repository and in a Linux package.
 
 ## ICU
 
@@ -112,5 +113,5 @@ for text and locales. Qt's own Linux builds link ICU 73 and keep it in their `li
 OpenGP package built with them carries it in `qt/lib/` (libicuuc, libicui18n and libicudata). ICU is
 under the Unicode licence, and its `LICENSE` adds the notices of the third-party data and code it
 contains, such as the word break dictionaries and Google's double-conversion. ICU 73's `LICENSE` is
-in [licenses/ICU-LICENSE.txt](licenses/ICU-LICENSE.txt). A package that has no ICU in `qt/lib/`
-doesn't carry the file either.
+in `licenses/ICU-LICENSE.txt`, in this repository and in a package. A package that has no ICU in
+`qt/lib/` doesn't carry the file either.
