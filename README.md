@@ -93,7 +93,10 @@ Things it takes care of:
   through SDL's own tables (`scancode_tables.cpp`, made by `tools/gen_scancodes.py`). While a game
   runs, the launcher lets go of the controllers.
 
-## Roadmap
+## Features
+
+The launcher is feature-locked at 1.0, like OpenGP: from here on it takes only bug fixes and design
+tweaks. Besides what is above:
 
 | # | Feature |
 |---|---------|
@@ -102,6 +105,12 @@ Things it takes care of:
 
 ## Licence
 
-GPL-3.0-or-later, like OpenGP ([LICENSE](LICENSE)). The interface's typeface is M PLUS Rounded 1c
-(SIL Open Font Licence, [src/fonts/OFL.txt](src/fonts/OFL.txt)), cut down to Latin letters. The
-scancode tables are SDL's (zlib licence, in the file).
+Copyright (C) 2026 the OpenGP contributors. GPL-3.0-or-later, like OpenGP ([LICENSE](LICENSE)). The
+source code is this repository and OpenGP at the commit `external/OpenGP` points to.
+
+A launcher also contains third-party work, each under its own licence: Qt 6 (LGPL-3.0), SDL 3 with
+HIDAPI and yuv2rgb, toml++, OpenGP's texture decoders ported from Dolphin, the interface's typeface
+M PLUS Rounded 1c (SIL Open Font Licence, [src/fonts/OFL.txt](src/fonts/OFL.txt)), cut down to Latin
+letters, and SDL's scancode tables (zlib licence, in the file).
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) lists them with their notices, and says where Qt's
+source is.

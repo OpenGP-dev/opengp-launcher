@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Writes src/core/scancode_tables.cpp from SDL's scancode tables.
 
     python tools/gen_scancodes.py <SDL source>/src/events src/core/scancode_tables.cpp
