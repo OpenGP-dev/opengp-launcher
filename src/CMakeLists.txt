@@ -77,6 +77,7 @@ target_compile_definitions(opengp_launcher PRIVATE
   OPENGP_VERSION="${OPENGP_VERSION}"
   LAUNCHER_DEV_HOME="${LAUNCHER_DEV_HOME}"
   LAUNCHER_NEWS_URL="${LAUNCHER_NEWS_URL}"
+  LAUNCHER_RELEASES_URL="${LAUNCHER_RELEASES_URL}"
   # The CMake and Ninja this was built with, to build the games of a source tree.
   LAUNCHER_CMAKE="${CMAKE_COMMAND}"
   LAUNCHER_MAKE_PROGRAM="${CMAKE_MAKE_PROGRAM}")

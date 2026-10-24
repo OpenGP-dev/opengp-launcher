@@ -179,7 +179,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < launcher.games()->rowCount(); ++i)
       if (launcher.games()->at(i).id == args.value(game_opt)) launcher.setCurrentIndex(i);
   UserData user_data;
-  News news;
+  News news(nullptr);
 
   // --play: once the first look at the games is done.
   if (args.isSet(play_opt)) {

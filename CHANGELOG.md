@@ -4,8 +4,16 @@
 
 The first public release of the OpenGP Launcher, with OpenGP 1.0.1: it comes in OpenGP 1.0.1's
 installer packages as `OpenGP` (`OpenGP.exe`, `OpenGP.app`). Launcher 1.0.1 is 1.0.0, an internal
-release whose notes follow, with the fixes below. It is built on OpenGP 1.0.1's code, so it reads
-and writes the games' files as the 1.0.1 games do. It still opens an OpenGP 1.0.0 package folder.
+release whose notes follow, with update notices and the fixes below. It is built on OpenGP 1.0.1's
+code, so it reads and writes the games' files as the 1.0.1 games do. It still opens an OpenGP 1.0.0
+package folder.
+
+### Update notices
+
+- In an installed package, Home says when a newer OpenGP is out ("OpenGP 1.0.2 is out."), with a
+  **Download** button that opens its release page on GitHub. The launcher looks at OpenGP's latest
+  release when it starts and every half hour, and not at all with the news turned off (Settings,
+  Launcher). It downloads nothing else and changes nothing.
 
 ### Fixes
 

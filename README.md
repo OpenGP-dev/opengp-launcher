@@ -49,6 +49,7 @@ Options:
 | `OPENGP_SOURCE_DIR` | another OpenGP checkout instead of the submodule (to work on both at once) |
 | `LAUNCHER_DEV_HOME` | the OpenGP folder a development build looks after (default: `OPENGP_SOURCE_DIR`; empty for a release) |
 | `LAUNCHER_NEWS_URL` | the news feed (`news.toml`); empty for none |
+| `LAUNCHER_RELEASES_URL` | OpenGP's latest release, for the notice on Home that a newer OpenGP is out (default: GitHub's API for OpenGP-dev/OpenGP, `.../releases/latest`); empty for none |
 
 OpenGP's package workflow builds the launcher for each installer package, from the OpenGP release it
 packages, and installs it into the package folder. `OpenGP` (`OpenGP.exe`, `OpenGP.app`) goes at the
@@ -125,6 +126,7 @@ tweaks. Besides what is above:
 |---|---------|
 | L1 | Disc image checking: each image checked against the known good dump of its game (the SHA-1 of the image after its header, from FIX94's [triforce-header-patcher](https://github.com/FIX94/triforce-header-patcher)), in the background, on the Play tab (`dump_check`) (**done**) |
 | L2 | Drag and drop: drop an `.iso` or `.gcm` on the window to add it, as **Add disc image** does (**done**) |
+| L8 | Update notices: in an installed package, Home says when a newer OpenGP is out, from its latest release on GitHub, with a button to its release page. Turning the news off turns this off too (**done**, 1.0.1) |
 
 ## Licence
 

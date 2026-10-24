@@ -335,7 +335,7 @@ Popup {
                     }
                     SettingRow {
                         label: "News"
-                        help: "Announcements from the OpenGP team, downloaded when the launcher starts."
+                        help: "Announcements from the OpenGP team and a notice on Home when a newer OpenGP is out, both downloaded when the launcher starts."
                         Toggle { checked: News.enabled; onToggled: News.enabled = checked }
                     }
                     SettingRow {

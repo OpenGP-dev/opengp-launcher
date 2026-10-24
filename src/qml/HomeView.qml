@@ -4,11 +4,13 @@ import QtQuick
 import QtQuick.Layouts
 
 // Home: each game with the one thing to do next (a card opens the game's own
-// page), then the news.
+// page), then the news. Beside the title, when a newer OpenGP is out, a notice
+// with a link to it.
 Item {
     id: home
     signal addImage()
     signal openGame(int index)
+    property string dismissedVersion  // the notice closed, until the launcher is opened again
 
     ColumnLayout {
         anchors.fill: parent
@@ -18,11 +20,56 @@ Item {
         anchors.bottomMargin: 24
         spacing: 24
 
-        Text {
-            text: "OpenGP"
-            color: Theme.chalk
-            font.pixelSize: Theme.display + 6
-            font.weight: Font.ExtraBold
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 28
+            Text {
+                text: "OpenGP"
+                color: Theme.chalk
+                font.pixelSize: Theme.display + 6
+                font.weight: Font.ExtraBold
+            }
+            Rectangle {
+                visible: News.newVersion.length > 0 && News.newVersion !== home.dismissedVersion
+                implicitWidth: notice.implicitWidth + 40
+                implicitHeight: notice.implicitHeight + 14
+                radius: height / 2
+                color: Qt.rgba(0.082, 0.102, 0.145, 0.78)
+                border.color: Theme.line
+                RowLayout {
+                    id: notice
+                    anchors.centerIn: parent
+                    spacing: 12
+                    Rectangle {
+                        width: 8; height: 8; radius: 4
+                        color: Theme.blue
+                    }
+                    Text {
+                        text: "OpenGP " + News.newVersion + " is out."
+                        color: Theme.chalk
+                        font.pixelSize: Theme.lead
+                    }
+                    PillButton {
+                        text: "Download"
+                        onClicked: Launcher.openLink(News.newVersionPage)
+                    }
+                    Icon {
+                        implicitWidth: 12
+                        implicitHeight: 12
+                        name: "cross"
+                        color: closeArea.containsMouse ? Theme.chalk : Theme.faint
+                        MouseArea {
+                            id: closeArea
+                            anchors.fill: parent
+                            anchors.margins: -6
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: home.dismissedVersion = News.newVersion
+                        }
+                    }
+                }
+            }
+            Item { Layout.fillWidth: true }
         }
 
         RowLayout {

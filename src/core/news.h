@@ -34,4 +34,13 @@ bool parse_news(const std::string& text, std::vector<NewsItem>* items, int* skip
 // How many of the items the player has not seen.
 int unread_news(const std::vector<NewsItem>& items, const std::set<std::string>& seen);
 
+// For the notice that a newer OpenGP is out (qt/news.h): the version of a
+// release from its tag, "1.0.2" from "v1.0.2" or "1.0.2", or "" if the tag is
+// not three numbers (a prerelease's "1.1.0-rc1" is not).
+std::string release_version(const std::string& tag);
+
+// Whether version `a` is later than `b`, number by number (1.0.10 is later
+// than 1.0.9); false if either is not a version as release_version reads it.
+bool newer_version(const std::string& a, const std::string& b);
+
 }  // namespace launcher

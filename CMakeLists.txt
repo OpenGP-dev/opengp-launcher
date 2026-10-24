@@ -40,6 +40,11 @@ set(LAUNCHER_DEV_HOME "${OPENGP_SOURCE_DIR}" CACHE PATH "The OpenGP folder a dev
 # The news feed (news.toml, see docs/news.md); empty for none.
 set(LAUNCHER_NEWS_URL "" CACHE STRING "The news feed the launcher shows (a news.toml URL)")
 
+# OpenGP's latest release on GitHub, for the notice on Home that a newer
+# OpenGP is out (in an installed package); empty for none.
+set(LAUNCHER_RELEASES_URL "https://api.github.com/repos/OpenGP-dev/OpenGP/releases/latest" CACHE STRING
+    "OpenGP's latest release (GitHub's API), for the notice that a newer OpenGP is out")
+
 find_package(Qt6 6.8 REQUIRED COMPONENTS Quick QuickControls2 Network)
 qt_standard_project_setup(REQUIRES 6.8)
 
