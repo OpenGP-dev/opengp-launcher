@@ -176,7 +176,7 @@ Popup {
                     }
                     SettingRow {
                         label: "Window size"
-                        help: "When not full screen. The game remembers it when you resize its window."
+                        help: "Set the default size of the game window. This has no effect when running fullscreen"
                         Row {
                             spacing: 8
                             NumberBox { from: 320; to: 16384; number: GameSettings.windowWidth; onEdited: n => GameSettings.windowWidth = n }
@@ -185,10 +185,10 @@ Popup {
                         }
                     }
                     SettingRow {
-                        label: "Shape of the picture"
-                        help: "The games were made for 4:3. Wider shapes show more of each course."
+                        label: "Aspect Ratio"
+                        help: "Set the aspect ratio of the game"
                         Choice {
-                            model: ["The window's shape", "4:3, as in the arcade", "16:9", "16:10", "21:9"]
+                            model: ["Auto", "4:3 (Original)", "16:9 (Widescreen)", "16:10", "21:9 (Ultrawide)"]
                             currentIndex: GameSettings.aspect
                             onActivated: i => GameSettings.aspect = i
                         }
@@ -197,19 +197,19 @@ Popup {
                         label: "Resolution"
                         help: "How sharply the game draws, as a multiple of the cabinet's 640×528."
                         Choice {
-                            model: ["Match the window", "1× (as in the arcade)", "2×", "3×", "4×", "5×", "6×", "7×", "8×"]
+                            model: ["Auto", "1× (Original)", "2× (720p)", "3× (1080p)", "4× (1440p)", "5×", "6× (4K)", "7×", "8× (5K)"]
                             currentIndex: GameSettings.internalResolution
                             onActivated: i => GameSettings.internalResolution = i
                         }
                     }
                     SettingRow {
                         label: "VSync"
-                        help: "Waits for the screen, so the picture never tears."
+                        help: "Lock framerate to your monitor. May cause input delay and screen tearing"
                         Toggle { checked: GameSettings.vsync; onToggled: GameSettings.vsync = checked }
                     }
                     SettingRow {
-                        label: "Even frame pacing"
-                        help: "Shows each frame on the game's own 60 Hz tick, as a cabinet does: smoother with FreeSync or G-Sync, for about 8 ms more delay."
+                        label: "Frame Pacing (Experimental)"
+                        help: "Syncs frametimes to that of the original cabinet: smoother with FreeSync or G-Sync but introduces slight delay."
                         Toggle { checked: GameSettings.evenPacing; onToggled: GameSettings.evenPacing = checked }
                     }
                 }
@@ -233,33 +233,23 @@ Popup {
                     enabled: !dialog.locked
                     SettingRow {
                         label: "Free play"
-                        help: "Races without coins."
+                        help: "Enables Free Play mode"
                         Toggle { checked: GameSettings.freePlay; onToggled: GameSettings.freePlay = checked }
                     }
                     SettingRow {
                         label: "Pause while the menu is open"
-                        help: "The game's own menu (Esc). Never in linked races."
+                        help: "Pause the game while the ingame menu is open (No effect in VS Races)"
                         Toggle { checked: GameSettings.pauseInMenu; onToggled: GameSettings.pauseInMenu = checked }
                     }
                     SettingRow {
-                        label: "Pause in the background"
-                        help: "When you switch to another window."
+                        label: "Pause when unfocused"
+                        help: "Puase the game when in the background (No effect in VS Races)"
                         Toggle { checked: GameSettings.pauseInBackground; onToggled: GameSettings.pauseInBackground = checked }
                     }
                     SettingRow {
-                        label: "Show what you're playing on Discord"
-                        help: "Your profile shows the game, the course and your place while Discord runs on this computer."
+                        label: "Discord Rich Presence"
+                        help: "Show what you are playing in Discord"
                         Toggle { checked: GameSettings.richPresence; onToggled: GameSettings.richPresence = checked }
-                    }
-                    SettingRow {
-                        label: "Mario Card"
-                        help: "Choose and look after the cards under Saves & data."
-                        Text {
-                            text: GameSettings.card.length ? GameSettings.card : "None"
-                            color: Theme.chalk
-                            font.family: Theme.family
-                            font.pixelSize: Theme.lead
-                        }
                     }
                 }
 
@@ -267,10 +257,10 @@ Popup {
                 Page {
                     enabled: !dialog.locked
                     SettingRow {
-                        label: "Photos from"
-                        help: "The cabinet's camera takes the players' photos for their cards. Changes apply when the game starts."
+                        label: "Camera"
+                        help: "Enable or Disable the camera"
                         Choice {
-                            model: ["No camera", "A webcam", "Colour bars (test)"]
+                            model: ["Disabled", "Enabled", "Colour bars (test)"]
                             currentIndex: GameSettings.camera
                             onActivated: i => GameSettings.camera = i
                         }
@@ -281,7 +271,7 @@ Popup {
                         Choice {
                             id: webcamChoice
                             property var cams: []
-                            model: ["The first one"].concat(cams)
+                            model: ["Default"].concat(cams)
                             currentIndex: Math.max(0, cams.indexOf(GameSettings.webcam) + 1)
                             onActivated: i => GameSettings.webcam = i === 0 ? "" : cams[i - 1]
                             Component.onCompleted: if (GameSettings.camera === 1) cams = GameSettings.webcams()
