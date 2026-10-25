@@ -119,14 +119,16 @@ Things it takes care of:
 
 ## Features
 
-The launcher is feature-locked at 1.0, like OpenGP: from here on it takes only bug fixes and design
-tweaks. Besides what is above:
+Besides what is above:
 
-| # | Feature |
-|---|---------|
-| L1 | Disc image checking: each image checked against the known good dump of its game (the SHA-1 of the image after its header, from FIX94's [triforce-header-patcher](https://github.com/FIX94/triforce-header-patcher)), in the background, on the Play tab (`dump_check`) (**done**) |
-| L2 | Drag and drop: drop an `.iso` or `.gcm` on the window to add it, as **Add disc image** does (**done**) |
-| L8 | Update notices: in an installed package, Home says when a newer OpenGP is out, from its latest release on GitHub, with a button to its release page. Turning the news off turns this off too (**done**, 1.0.1) |
+- Disc image checking: each image checked against the known good dump of its game (the SHA-1 of
+  the image after its header, from FIX94's
+  [triforce-header-patcher](https://github.com/FIX94/triforce-header-patcher)), in the background,
+  on the Play tab (`dump_check`).
+- Drag and drop: drop an `.iso` or `.gcm` on the window to add it, as **Add disc image** does.
+- Update notices: in an installed package, Home says when a newer OpenGP is out, from its latest
+  release on GitHub, with a button to its release page. Turning the news off turns this off too
+  (since 1.0.1).
 
 ## Licence
 
