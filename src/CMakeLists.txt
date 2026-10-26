@@ -39,6 +39,7 @@ qt_add_qml_module(opengp_launcher
     qml/Theme.qml
     qml/GameRail.qml
     qml/HomeView.qml
+    qml/DxView.qml
     qml/GameButton.qml
     qml/HeroPane.qml
     qml/PlayBar.qml

@@ -14,6 +14,8 @@ Arcade GP 2 and GP 1. In one window:
   wheels), written to the same `user/settings.toml` and `user/controls.toml` the games read.
 - **Saves & data**: Mario Cards (hold, add, rename, copy, save as a file, delete), the game's own
   data (reset), backups of everything (back up, restore), screenshots and the last run's log.
+- **GP DX**: Mario Kart Arcade GP DX is not a Triforce game and OpenGP does not play it; its page
+  says why, and how people play it otherwise.
 
 The pictures (each game's logo, button and course previews) come from your own disc image when you
 add it, into `user/art/`; none are part of the launcher.
@@ -66,7 +68,7 @@ OpenGP [--home DIR] [--user-dir DIR] [--game ID] [--play] [IMAGE...]
 OpenGP --version
 OpenGP --smoke-test                          load the interface and quit (fails on any QML warning)
 OpenGP --screenshot-ui FILE [--view VIEW]    a picture of the window, then quit
-                                             VIEW: home, play, saves, settings/<page>
+                                             VIEW: home, play, saves, dx, settings/<page>
 ```
 
 Settings and saves are in `<home>/user/` (or `--user-dir`): the games' `settings.toml`,

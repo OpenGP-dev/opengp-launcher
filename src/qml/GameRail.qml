@@ -2,13 +2,16 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 
-// Home and the games down the left, as on a game launcher; adding a game and
-// the settings at the bottom.
+// Home and the games down the left, as on a game launcher, then GP DX (not
+// OpenGP's: how to play it otherwise); adding a game and the settings at the
+// bottom.
 Rectangle {
     id: rail
     property bool home: false  // Home is showing, not a game
+    property bool dx: false    // GP DX's page is showing
     signal openHome()
     signal openGame(int index)
+    signal openDx()
     signal addImage()
     signal openSettings()
     color: Theme.asphaltDeep
@@ -80,7 +83,7 @@ Rectangle {
         ListView {
             id: list
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.preferredHeight: contentHeight
             spacing: 14
             interactive: false
             model: Launcher.games
@@ -93,7 +96,7 @@ Rectangle {
                 required property string tile
                 required property string gameId
                 required property int gameState
-                readonly property bool chosen: !rail.home && Launcher.currentIndex === index
+                readonly property bool chosen: !rail.home && !rail.dx && Launcher.currentIndex === index
                 readonly property bool playable: gameState === Launcher.Ready
                 readonly property bool running: Launcher.runningId === gameId
                 width: ListView.view.width
@@ -197,6 +200,59 @@ Rectangle {
                 }
             }
         }
+
+        Item {
+            id: dxEntry
+            Layout.fillWidth: true
+            implicitHeight: 92
+            visible: Launcher.games.count > 0
+
+            Rectangle {
+                width: 4
+                height: 52
+                radius: 2
+                x: 0
+                y: 6
+                color: Theme.marquee
+                visible: rail.dx
+            }
+            Rectangle {
+                id: dxTile
+                width: 64; height: 64
+                radius: 16
+                anchors.horizontalCenter: parent.horizontalCenter
+                color: dxArea.containsMouse ? Theme.panelHover : Theme.panel
+                border.width: rail.dx ? 2 : dxArea.containsMouse ? 1 : 0
+                border.color: rail.dx ? Theme.marquee : Theme.dim
+                scale: dxArea.pressed ? 0.95 : 1
+                Behavior on scale { NumberAnimation { duration: 90 } }
+                Text {
+                    anchors.centerIn: parent
+                    text: "DX"
+                    color: rail.dx ? Theme.chalk : Theme.dim
+                    font.pixelSize: Theme.title
+                    font.weight: Font.ExtraBold
+                }
+            }
+            Text {
+                anchors.top: dxTile.bottom
+                anchors.topMargin: 6
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "GP DX"
+                color: rail.dx ? Theme.chalk : Theme.dim
+                font.pixelSize: Theme.small
+                font.weight: rail.dx ? Font.ExtraBold : Font.Normal
+            }
+            MouseArea {
+                id: dxArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: rail.openDx()
+            }
+        }
+
+        Item { Layout.fillHeight: true }
 
         // Neither means anything without OpenGP (no games): its settings are
         // kept in its folder.
