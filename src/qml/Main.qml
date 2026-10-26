@@ -5,17 +5,18 @@ import QtQuick.Layouts
 
 ApplicationWindow {
     id: window
-    // What to show first (--view): home, play, saves, news (on Home), settings/<page>.
+    // What to show first (--view): home, play, saves, news (on Home), dx, settings/<page>.
     property string startView
     // The chosen game's entry ({gameId, title, state, logo, heroes, ...}).
     property var game: ({})
     property bool home: true  // Home, else the chosen game's page
+    property bool dx: false   // GP DX's page (not OpenGP's game) instead of either
     property int tab: 0       // the game's page: 0 play, 1 saves & data
 
     visible: true
     minimumWidth: 1000
     minimumHeight: 640
-    title: !home && game.title ? "OpenGP: " + game.title : "OpenGP"
+    title: dx ? "OpenGP: Mario Kart Arcade GP DX" : !home && game.title ? "OpenGP: " + game.title : "OpenGP"
     color: Theme.asphalt
     font.family: Theme.family
 
@@ -24,6 +25,7 @@ ApplicationWindow {
     function openGame(index) {
         Launcher.currentIndex = index
         home = false
+        dx = false
     }
 
     Connections {
@@ -45,6 +47,7 @@ ApplicationWindow {
     Component.onCompleted: {
         updateGame()
         if (startView === "play" || startView === "saves") home = false
+        if (startView === "dx") dx = true
         if (startView === "saves") tab = 1
         else if (startView.startsWith("settings")) settings.openPage(startView.split("/")[1] || "")
     }
@@ -68,8 +71,10 @@ ApplicationWindow {
         GameRail {
             Layout.fillHeight: true
             Layout.preferredWidth: 96
-            home: window.home
-            onOpenHome: window.home = true
+            home: window.home && !window.dx
+            dx: window.dx
+            onOpenHome: { window.home = true; window.dx = false }
+            onOpenDx: window.dx = true
             onOpenGame: index => window.openGame(index)
             onAddImage: window.addImage()
             onOpenSettings: settings.openPage("")
@@ -81,13 +86,13 @@ ApplicationWindow {
 
             HeroPane {
                 anchors.fill: parent
-                game: window.game
+                game: window.dx ? ({}) : window.game
                 dim: window.home ? 0.55 : window.tab === 1 ? 0.7 : 0
             }
 
             HomeView {
                 anchors.fill: parent
-                visible: Launcher.homeError.length === 0 && window.home
+                visible: Launcher.homeError.length === 0 && window.home && !window.dx
                 onAddImage: window.addImage()
                 onOpenGame: index => window.openGame(index)
             }
@@ -95,7 +100,7 @@ ApplicationWindow {
             ColumnLayout {
                 anchors.fill: parent
                 spacing: 0
-                visible: Launcher.homeError.length === 0 && !window.home
+                visible: Launcher.homeError.length === 0 && !window.home && !window.dx
 
                 // The game's logo, its name and the tabs.
                 ColumnLayout {
@@ -181,6 +186,11 @@ ApplicationWindow {
                     game: window.game
                     onAddImage: window.addImage()
                 }
+            }
+
+            DxView {
+                anchors.fill: parent
+                visible: Launcher.homeError.length === 0 && window.dx
             }
 
             // OpenGP is not where the launcher looked.
