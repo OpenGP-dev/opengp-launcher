@@ -17,7 +17,7 @@ struct GameArt {
 };
 
 // Bump when the pictures change, so that they are made again.
-inline constexpr int kArtVersion = 5;
+inline constexpr int kArtVersion = 6;
 
 // The pictures made before for this image, if they are current.
 GameArt existing_art(const QString& art_dir, const QString& image);

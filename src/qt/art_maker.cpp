@@ -98,21 +98,23 @@ bool make_art(const QString& image, const QString& game_id, const QString& art_d
   Picture logo, tile;
   if (game_id == QLatin1String("GGPE02")) {
     // GP 2: the logo from the attract mode's logo sheet (the one without
-    // flames), and the title screen's big flaming 2.
+    // flames), and Mario and Wario racing from an ending picture (inside its
+    // frame).
     Picture sheet;
     if (read_masked(disc, "tpl2_at_sp_c27_logoset", &sheet)) logo = trim(crop(sheet, 55, 206, 457, 116));
-    std::vector<Picture> title;
-    if (read_tpl(disc, "tpl2_E_title_logo01.tpl", &title)) tile = crop(title[0], 372, 190, 140, 140);
+    std::vector<Picture> ending;
+    if (read_tpl(disc, "tpl2_sp_ed_100cc_07.tpl", &ending)) tile = crop(ending[0], 14, 80, 228, 228);
   } else if (game_id == QLatin1String("GGPE01")) {
     // GP 1: the logo cut from the title screen (off its white background),
-    // and Pac-Man from it (clear of the namco logo).
+    // and Pac-Man, Mario and Bowser racing from the character select.
     Picture title;
     if (read_screen(disc, "E_sp_title.tpl", &title)) {
       logo = crop(title, 60, 36, 520, 162);
       key_out_background(&logo);
       logo = trim(logo);
-      tile = crop(title, 466, 200, 174, 174);
     }
+    std::vector<Picture> racers;
+    if (read_tpl(disc, "sprite_sel_3_5.tpl", &racers)) tile = crop(racers[0], 64, 0, 128, 128);
   }
   save(logo, dir.filePath(QStringLiteral("logo.png")));
   save(tile, dir.filePath(QStringLiteral("tile.png")));

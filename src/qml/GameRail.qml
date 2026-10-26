@@ -119,14 +119,14 @@ Rectangle {
                     Behavior on scale { NumberAnimation { duration: 90 } }
 
                     Rectangle {
-                        // Until there is a picture; not under it, where its
-                        // see-through parts would show the name.
                         id: fallback
                         anchors.fill: parent
                         radius: 16
                         color: Theme.panel
-                        visible: picture.status !== Image.Ready
                         Text {
+                            // Until there is a picture; not under it, where its
+                            // see-through parts would show the name.
+                            visible: picture.status !== Image.Ready
                             anchors.centerIn: parent
                             text: entry.shortTitle
                             color: Theme.chalk
