@@ -288,24 +288,24 @@ Popup {
                 // Linked cabinets
                 Page {
                     enabled: !dialog.locked
-                    note: "Up to four cabinets link for Versus races: copies of OpenGP on this computer, or on computers on your network. "
+                    note: "Link up to four cabinets for Versus races on computers on your local network. "
                           + "Give each its own number. These apply when the game starts."
                     SettingRow {
                         label: "Cabinet number"
                         Choice {
-                            model: ["The game's own (test menu)", "1", "2", "3", "4"]
+                            model: ["Use Machine Value (test menu)", "1", "2", "3", "4"]
                             currentIndex: GameSettings.cabinet
                             onActivated: i => GameSettings.cabinet = i
                         }
                     }
                     SettingRow {
-                        label: "Link over the local network"
-                        help: "Also finds cabinets on other computers on your network."
+                        label: "Link using LAN"
+                        help: "Automatically links cabinets using copies of OpenGP on your local network."
                         Toggle { checked: GameSettings.lan; onToggled: GameSettings.lan = checked }
                     }
                     SettingRow {
-                        label: "First port"
-                        help: "The link uses this port and the 39 after it. Every cabinet must use the same."
+                        label: "Default Port"
+                        help: "Only change if you are having problems. NOT RECOMMENDED TO CHANGE FROM DEFAULT"
                         NumberBox { from: 1024; to: 65495; number: GameSettings.linkPort; onEdited: n => GameSettings.linkPort = n }
                     }
                 }
@@ -325,7 +325,7 @@ Popup {
                     }
                     SettingRow {
                         label: "News"
-                        help: "Announcements from the OpenGP team and a notice on Home when a newer OpenGP is out, both downloaded when the launcher starts."
+                        help: "Show News and Announcements from the OpenGP team, and a notice on Home when a newer OpenGP is out."
                         Toggle { checked: News.enabled; onToggled: News.enabled = checked }
                     }
                     SettingRow {
