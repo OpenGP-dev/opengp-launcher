@@ -39,7 +39,7 @@ Item {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: tab.game.image ? tab.game.image.split(/[\\/]/).pop() : "None yet"
+                    text: tab.game.image ? tab.game.image.split(/[\\/]/).pop() : "Not Found"
                     color: tab.game.image ? Theme.chalk : Theme.dim
                     font.pixelSize: Theme.body
                     elide: Text.ElideMiddle
@@ -98,7 +98,7 @@ Item {
                             Layout.fillWidth: true
                             spacing: 4
                             Text {
-                                text: "That disc image can't be used"
+                                text: "Invalid Disk Image"
                                 color: Theme.chalk
                                 font.pixelSize: Theme.body
                                 font.weight: Font.ExtraBold
@@ -165,7 +165,7 @@ Item {
                         onClicked: Launcher.openFolder("image")
                     }
                     PillButton {
-                        text: "Check again"
+                        text: "Verify"
                         visible: !!tab.game.image && tab.game.dumpCheck !== Launcher.NotChecked
                         enabled: Launcher.verifyingId.length === 0
                         onClicked: Launcher.checkImage(Launcher.currentIndex)
@@ -188,10 +188,10 @@ Item {
                     lineHeight: 1.2
                     text: {
                         switch (tab.game.gameState) {
-                        case Launcher.Ready: return Launcher.isPackage ? "Installed, built by this version of OpenGP." : "Built from the OpenGP source tree."
-                        case Launcher.OutOfDate: return "Built by another version of OpenGP."
+                        case Launcher.Ready: return Launcher.isPackage ? "Installed, built by the latest version of OpenGP." : "Built from source"
+                        case Launcher.OutOfDate: return "Built by an old or outdated version of OpenGP."
                         case Launcher.NotBuilt: return Launcher.isPackage ? "Not installed yet." : "Not built yet."
-                        case Launcher.NoImage: return "Needs its disc image."
+                        case Launcher.NoImage: return "No Disk Image."
                         default: return "Checking"
                         }
                     }
@@ -200,7 +200,7 @@ Item {
                     Layout.fillWidth: true
                     spacing: 8
                     PillButton {
-                        text: "Build again"
+                        text: "Rebuild"
                         visible: tab.game.gameState === Launcher.Ready
                         enabled: Launcher.runningId.length === 0 && Launcher.buildingId.length === 0
                         onClicked: confirm.ask("Build " + tab.game.title + " again?",
@@ -217,7 +217,7 @@ Item {
                                                "Uninstall", true, () => Launcher.removeBuild(Launcher.currentIndex))
                     }
                     PillButton {
-                        text: "Open the OpenGP folder"
+                        text: "Open OpenGP folder"
                         onClicked: Launcher.openFolder("home")
                     }
                 }
@@ -231,9 +231,9 @@ Item {
     function dumpText() {
         if (verifying) return "Checking it against the known good dump: " + Math.round(Launcher.verifyProgress * 100) + "%"
         switch (game.dumpCheck) {
-        case Launcher.DumpGood: return "A known good dump"
-        case Launcher.DumpKnownBad: return "A known bad dump"
-        case Launcher.DumpUnknown: return "Not a known good dump"
+        case Launcher.DumpGood: return "Known good dump"
+        case Launcher.DumpKnownBad: return "Known bad dump"
+        case Launcher.DumpUnknown: return "Unknown dump"
         default: return "Not checked yet"
         }
     }

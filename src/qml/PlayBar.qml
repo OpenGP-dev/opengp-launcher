@@ -85,8 +85,8 @@ Rectangle {
                     y: -height - 8
                     width: 300
                     background: Rectangle { color: Theme.panel; radius: 10; border.color: Theme.line }
-                    RunItem { text: "Start in the test menu"; onTriggered: Launcher.play(Launcher.currentIndex, true, false) }
-                    RunItem { text: "Play and log the game's own messages"; onTriggered: Launcher.play(Launcher.currentIndex, false, true) }
+                    RunItem { text: "Play And Open Test Menu"; onTriggered: Launcher.play(Launcher.currentIndex, true, false) }
+                    RunItem { text: "Play With Debug Logging"; onTriggered: Launcher.play(Launcher.currentIndex, false, true) }
                 }
             }
         }

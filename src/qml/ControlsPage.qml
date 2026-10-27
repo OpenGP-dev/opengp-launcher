@@ -19,7 +19,7 @@ ScrollView {
             Layout.fillWidth: true
             Layout.topMargin: 8
             visible: Controls.locked
-            text: "A game is running and has the controllers. Close it to change the controls."
+            text: "Controls cant be changed while the game is running. Use the in game menu for this"
             color: Theme.dim
             font.family: Theme.family
             font.pixelSize: Theme.body
@@ -140,9 +140,9 @@ ScrollView {
                         Text {
                             id: waiting
                             anchors.centerIn: parent
-                            text: Controls.device === 0 ? "Press a key (Esc to stop)"
-                                : row.modelData.axis ? "Move a stick or wheel all the way (Esc to stop)"
-                                : "Press a button or move a stick (Esc to stop)"
+                            text: Controls.device === 0 ? "Press a key (Esc to Cancel)"
+                                : row.modelData.axis ? "Move a stick or wheel (Esc to Cancel)"
+                                : "Press a button or move a stick (Esc to Cancel)"
                             color: Theme.marquee
                             font.family: Theme.family
                             font.pixelSize: Theme.body
@@ -169,7 +169,7 @@ ScrollView {
 
         SettingRow {
             label: "Steering speed"
-            help: "How fast keys turn the wheel: full turns a second."
+            help: "How fast keys turn the wheel. Simulates Analogue Steering"
             visible: Controls.device === 0
             ValueSlider {
                 from: 0.5; to: 10; stepSize: 0.5
@@ -180,7 +180,7 @@ ScrollView {
         }
         SettingRow {
             label: "Dead zone"
-            help: "How far a stick or wheel moves before the game sees it."
+            help: "How far a stick or wheel moves before the game reads the input."
             visible: Controls.device > 0
             ValueSlider {
                 from: 0; to: 0.5; stepSize: 0.01
@@ -191,7 +191,7 @@ ScrollView {
         }
         SettingRow {
             label: "Force feedback"
-            help: "How hard wheels push back, and how strongly gamepads rumble."
+            help: "Adjusts Rumble Intensity"
             visible: Controls.device > 0
             ValueSlider {
                 from: 0; to: 2; stepSize: 0.05
@@ -201,8 +201,8 @@ ScrollView {
             }
         }
         SettingRow {
-            label: "Use the controls in the background too"
-            help: "Every OpenGP window reads the controls, active or not, to drive several cabinets on one computer."
+            label: "Background input"
+            help: "Allows the game to be controlled while the window is not in focus"
             Toggle { checked: Controls.backgroundInput; onToggled: Controls.backgroundInput = checked }
         }
         Text {

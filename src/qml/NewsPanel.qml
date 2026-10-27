@@ -163,7 +163,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             visible: !panel.hasNews && News.whatsNew.length === 0
-            text: News.enabled ? "No news yet." : "News is off. Turn it on in Settings, under Launcher."
+            text: News.enabled ? "News Unavailable" : "News is off. Turn it on in Settings, under Launcher."
             color: Theme.dim
             font.pixelSize: Theme.body
             wrapMode: Text.WordWrap
