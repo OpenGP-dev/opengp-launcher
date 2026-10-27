@@ -34,8 +34,8 @@ Item {
                 Section {
                     Layout.fillWidth: true
                     title: "Mario Cards"
-                    note: tab.locked ? "Close the game to change its cards."
-                                     : "The card you hold is the one the game reads when it asks for your card."
+                    note: tab.locked ? "Close the game to change cards."
+                                     : "The card shown here is the card the game reads"
 
                     Repeater {
                         model: UserData.cards
@@ -69,7 +69,7 @@ Item {
                                 }
                                 Text {
                                     visible: card.held
-                                    text: "Holding"
+                                    text: "Using"
                                     color: Theme.marquee
                                     font.pixelSize: Theme.small
                                     font.weight: Font.ExtraBold
@@ -77,7 +77,7 @@ Item {
                                 PillButton {
                                     visible: !card.held
                                     enabled: !tab.locked
-                                    text: "Hold"
+                                    text: "Use"
                                     onClicked: GameSettings.card = card.modelData
                                 }
                             }
@@ -92,7 +92,7 @@ Item {
                     }
                     Text {
                         visible: UserData.cards.length === 0
-                        text: GameSettings.card.length ? "No cards saved yet. " + GameSettings.card + " is saved when the game gives you a card."
+                        text: GameSettings.card.length ? "No cards created yet. " + GameSettings.card + " can be made in game."
                                                        : "No cards yet."
                         color: Theme.dim
                         font.pixelSize: Theme.body
@@ -118,7 +118,7 @@ Item {
                             onClicked: UserData.duplicateCard(tab.selectedCard)
                         }
                         PillButton {
-                            text: "Save as file"
+                            text: "Export"
                             visible: tab.selectedCard.length > 0
                             onClicked: exportDialog.open()
                         }
@@ -127,7 +127,7 @@ Item {
                             visible: tab.selectedCard.length > 0
                             enabled: !tab.locked
                             onClicked: confirm.ask("Delete " + tab.selectedCard + "?",
-                                                   "Its progress and records are gone for good, unless a backup has them.",
+                                                   "Once deleted, unless you have a backup, the card cannot be recovered.",
                                                    "Delete card", true, () => { UserData.deleteCard(tab.selectedCard); tab.selectedCard = "" })
                         }
                     }
@@ -135,14 +135,14 @@ Item {
 
                 Section {
                     Layout.fillWidth: true
-                    title: "The game's own data"
-                    note: "The cabinet's settings from the test menu, the records and the rankings, kept apart from the cards."
+                    title: "Game Data"
+                    note: "Wipe all local cabinet data. and reset to default. (Cards are unaffected)"
                     PillButton {
-                        text: "Reset to new"
+                        text: "Factory Reset"
                         kind: "danger"
                         enabled: !tab.locked && UserData.hasGameData
                         onClicked: confirm.ask("Reset the game's data?",
-                                               "The game starts as a new cabinet: test-menu settings, records and rankings go. "
+                                               "The game starts as a new cabinet: test-menu settings, records and rankings are reset "
                                                + "A backup of everything is made first.",
                                                "Reset", true, () => UserData.resetGameData())
                     }
@@ -151,8 +151,8 @@ Item {
                 Section {
                     Layout.fillWidth: true
                     title: "Backups"
-                    note: "A backup copies your settings, controls, cards and both games' data. "
-                          + "Restoring one makes a backup of what is there now first."
+                    note: "Backups copy your settings, controls, cards and data across both games. "
+                          + "Restoring from a backup will automatically make a backup of your current settings"
 
                     Repeater {
                         model: UserData.backups
@@ -200,12 +200,12 @@ Item {
                         Layout.fillWidth: true
                         Layout.topMargin: 6
                         spacing: 8
-                        PillButton { text: "Back up now"; onClicked: UserData.backUp() }
+                        PillButton { text: "Back up"; onClicked: UserData.backUp() }
                         PillButton {
                             text: "Restore"
                             enabled: !tab.locked && tab.selectedBackup.length > 0
                             onClicked: confirm.ask("Restore " + tab.selectedBackup + "?",
-                                                   "Settings, controls, cards and the games' data go back to how they were then.",
+                                                   "Settings, controls, cards and game data are restored to the time of the backup.",
                                                    "Restore", false, () => UserData.restoreBackup(tab.selectedBackup))
                         }
                         PillButton {
@@ -229,7 +229,7 @@ Item {
                 Section {
                     Layout.fillWidth: true
                     title: "Screenshots"
-                    note: UserData.screenshots.length ? "" : "Press F12 in a game to take one."
+                    note: UserData.screenshots.length ? "" : "Press F12 at any time to take a screenshot"
                     Grid {
                         id: shots
                         Layout.fillWidth: true
@@ -262,7 +262,7 @@ Item {
                 Section {
                     Layout.fillWidth: true
                     title: "Last run's log"
-                    note: UserData.log.length ? "" : "The game's messages appear here after you play."
+                    note: UserData.log.length ? "" : "The game's internal logs are found here (useful for debugging)"
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 220
