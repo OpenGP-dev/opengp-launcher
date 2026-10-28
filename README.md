@@ -24,8 +24,8 @@ add it, into `user/art/`; none are part of the launcher.
 
 The launcher builds OpenGP's own libraries (settings, controls, disc images, the installer) as part
 of itself, from the OpenGP submodule in `external/OpenGP`, so it always reads and writes the files
-exactly as the games do. Each launcher release goes with the OpenGP release of the same number,
-which the submodule points at: launcher 1.0.1 with OpenGP 1.0.1.
+exactly as the games do. Each launcher release is built on the OpenGP release the submodule points
+at: launcher 1.0.0 on OpenGP 1.0.1.
 
 You need what OpenGP needs (CMake 3.25+, Ninja, Clang or GCC; clang-cl on Windows) and **Qt 6.8 or
 later** with Qt Quick, Qt Quick Controls and Qt Network. For example, with
@@ -141,8 +141,7 @@ Besides what is above:
   on the Play tab (`dump_check`).
 - Drag and drop: drop an `.iso` or `.gcm` on the window to add it, as **Add disc image** does.
 - Update notices: in an installed package, Home says when a newer OpenGP is out, from its latest
-  release on GitHub, with a button to its release page. Turning the news off turns this off too
-  (since 1.0.1).
+  release on GitHub, with a button to its release page. Turning the news off turns this off too.
 
 ## Licence
 
