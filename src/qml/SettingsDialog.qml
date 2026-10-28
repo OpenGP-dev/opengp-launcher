@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -323,7 +325,7 @@ Popup {
                     }
                     SettingRow {
                         label: "News"
-                        help: "Show News and Announcements from the OpenGP team"
+                        help: "Show News and Announcements from the OpenGP team, and a notice on Home when a newer OpenGP is out."
                         Toggle { checked: News.enabled; onToggled: News.enabled = checked }
                     }
                     SettingRow {

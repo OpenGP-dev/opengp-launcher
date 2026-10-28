@@ -47,6 +47,7 @@ class Launcher : public QObject {
   Q_PROPERTY(bool checking READ checking NOTIFY checkingChanged)
   Q_PROPERTY(QString buildingId READ buildingId NOTIFY buildingChanged)
   Q_PROPERTY(QString progressText READ progressText NOTIFY progressChanged)
+  Q_PROPERTY(bool stopping READ stopping NOTIFY progressChanged)  // Stop was pressed: the build is ending
   Q_PROPERTY(double progress READ progress NOTIFY progressChanged)
   Q_PROPERTY(QStringList buildLog READ buildLog NOTIFY progressChanged)
   Q_PROPERTY(QString runningId READ runningId NOTIFY runningChanged)
@@ -92,6 +93,7 @@ class Launcher : public QObject {
   bool checking() const { return checking_; }
   QString buildingId() const { return building_id_; }
   QString progressText() const { return progress_text_; }
+  bool stopping() const { return cancel_ && !building_id_.isEmpty(); }
   double progress() const { return progress_; }
   QStringList buildLog() const { return build_log_; }
   QString runningId() const { return running_id_; }
@@ -135,6 +137,10 @@ class Launcher : public QObject {
   void make_missing_art();
   void set_image_error(int row, const QString& error);
   void game_ended(const QString& id, int exit_code, bool crashed);
+  // A game started elsewhere (its shortcut, an earlier launcher) counts as
+  // running too, while it holds its lock: the launcher's changes to its
+  // settings and cards would be undone when it saves.
+  void check_running_elsewhere();
   void finish_build(bool ok, const QString& error);
   // A source tree's games, built with CMake (see core/source_build.h).
   void build_from_source(const Game& game, const QString& image);
@@ -164,6 +170,8 @@ class Launcher : public QObject {
   std::atomic<bool> cancel_{false}, stop_verify_{false};
   bool art_running_ = false, check_again_ = false;
   QString building_id_, progress_text_, running_id_, verifying_id_;
+  bool running_elsewhere_ = false;  // running_id_ is a game the launcher did not start
+  bool lock_was_free_ = false;      // and its lock was free at the last look
   double verify_progress_ = 0;
   std::set<std::string> verify_failed_;  // images that could not be read: not again until asked
   std::set<std::string> art_failed_;     // images no pictures could be made from: not again until one is added

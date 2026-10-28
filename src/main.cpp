@@ -179,7 +179,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < launcher.games()->rowCount(); ++i)
       if (launcher.games()->at(i).id == args.value(game_opt)) launcher.setCurrentIndex(i);
   UserData user_data;
-  News news;
+  News news(nullptr);
 
   // --play: once the first look at the games is done.
   if (args.isSet(play_opt)) {
@@ -240,8 +240,7 @@ int main(int argc, char** argv) {
   auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
 
   // Problems with the games' settings or controls files: the launcher reads
-  // them first (and sets an unreadable controls.toml aside), so it says so,
-  // not only on its Settings and Controls pages.
+  // them first, so it says so, not only on its Settings and Controls pages.
   if (launcher.homeError().isEmpty()) {
     QStringList problems;
     for (const QString& p : {settings.error(), settings.warning(), controls.error()})

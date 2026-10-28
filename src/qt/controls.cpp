@@ -7,8 +7,10 @@
 #include <QQmlEngine>
 #include <SDL3/SDL.h>
 #include <algorithm>
+#include <filesystem>
 
 #include "core/scancodes.h"
+#include "os/atomic_file.h"
 
 namespace launcher {
 
@@ -39,10 +41,13 @@ void Controls::start() {
   input_ = std::make_unique<input::HostInput>();
   std::string error;
   error_.clear();
-  // A failure, or warnings (a binding OpenGP did not understand, a file it
-  // set aside as controls.toml.bad): shown either way. No OpenGP, no file:
-  // load would write the defaults there.
-  if (!path_.isEmpty()) input_->load(path_.toStdString(), &error);
+  // A file OpenGP cannot read leaves the default controls in place, and load
+  // sets it aside as controls.toml.bad. If it could not, the file is still
+  // there: say so, and save nothing over it until the player restores the
+  // defaults. No OpenGP, no file: load would write the defaults there.
+  std::error_code ec;
+  load_failed_ = !path_.isEmpty() && !input_->load(path_.toStdString(), &error) &&
+                 std::filesystem::exists(os::utf8_path(path_.toStdString()), ec);
   if (!error.empty()) error_ = QString::fromStdString(error);
   error.clear();
   if (!input_->init(&error)) error_ = QStringLiteral("No controllers: ") + QString::fromStdString(error);
@@ -100,33 +105,41 @@ QVariantList Controls::rows() const {
 
 int Controls::capturing() const { return input_ && input_->capturing() ? capture_control_ : -1; }
 
+bool Controls::editable() {
+  // Not while a game has the controls, nor over a file that could not be
+  // read: the defaults in memory would replace every binding in it.
+  if (input_ && !load_failed_) return true;
+  emit changed();
+  return false;
+}
+
 double Controls::forceFeedback() const { return input_ ? input_->force_feedback() : 1.0; }
 void Controls::setForceFeedback(double v) {
-  if (!input_) return;
+  if (!editable()) return;
   input_->set_force_feedback(static_cast<float>(v));
   save();
 }
 double Controls::steerSpeed() const { return input_ ? input_->steer_speed() : 4.0; }
 void Controls::setSteerSpeed(double v) {
-  if (!input_) return;
+  if (!editable()) return;
   input_->set_steer_speed(static_cast<float>(v));
   save();
 }
 double Controls::deadzone() const { return input_ ? input_->deadzone(kind()) : 0.0; }
 void Controls::setDeadzone(double v) {
-  if (!input_) return;
+  if (!editable()) return;
   input_->set_deadzone(kind(), static_cast<float>(v));
   save();
 }
 bool Controls::backgroundInput() const { return input_ && input_->background_input(); }
 void Controls::setBackgroundInput(bool v) {
-  if (!input_) return;
+  if (!editable()) return;
   input_->set_background_input(v);
   save();
 }
 
 void Controls::startCapture(int control) {
-  if (!input_ || control < 0 || control >= static_cast<int>(input::HostInput::kControlCount)) return;
+  if (control < 0 || control >= static_cast<int>(input::HostInput::kControlCount) || !editable()) return;
   input_->start_capture(kind(), static_cast<std::size_t>(control));
   capture_control_ = control;
   // Keys come from the launcher's window, before QML sees them.
@@ -142,7 +155,7 @@ void Controls::cancelCapture() {
 }
 
 void Controls::removeBinding(int control, int index) {
-  if (!input_ || control < 0 || index < 0) return;
+  if (control < 0 || index < 0 || !editable()) return;
   input_->remove_binding(kind(), static_cast<std::size_t>(control), static_cast<std::size_t>(index));
   save();
 }
@@ -150,11 +163,20 @@ void Controls::removeBinding(int control, int index) {
 void Controls::restoreDefaults() {
   if (!input_) return;
   cancelCapture();
+  // An unreadable file is kept as controls.toml.bad, as GameSettings keeps
+  // settings.toml, so the player can still look at what was in it.
+  if (load_failed_) {
+    std::error_code ec;
+    const std::string path = path_.toStdString();
+    std::filesystem::rename(os::utf8_path(path), os::utf8_path(path + ".bad"), ec);
+    load_failed_ = false;
+  }
   input_->restore_defaults();
   save();
 }
 
 void Controls::save() {
+  if (load_failed_) return;  // never over a file that could not be read
   std::string error;
   error_ = input_ && !path_.isEmpty() && !input_->save(&error) ? QString::fromStdString(error) : QString();
   emit changed();

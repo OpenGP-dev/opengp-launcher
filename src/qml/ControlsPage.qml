@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -9,6 +11,7 @@ ScrollView {
     contentWidth: availableWidth
     clip: true
     readonly property var devices: ["Keyboard", "Gamepad", "Wheel and other controllers"]
+    readonly property bool editable: !Controls.locked && !Controls.loadFailed
 
     ColumnLayout {
         x: 36
@@ -18,8 +21,10 @@ ScrollView {
         Text {
             Layout.fillWidth: true
             Layout.topMargin: 8
-            visible: Controls.locked
-            text: "Controls cant be changed while the game is running. Use the in game menu for this"
+            visible: !page.editable
+            text: Controls.locked ? "Controls can't be changed while the game is running. Use the in game menu for this"
+                : "The controls file can't be read, so the games are using the default controls. "
+                  + "To change them, restore the defaults: the old file is kept as controls.toml.bad."
             color: Theme.dim
             font.family: Theme.family
             font.pixelSize: Theme.body
@@ -122,6 +127,7 @@ ScrollView {
                                     id: removeArea
                                     anchors.fill: parent
                                     anchors.margins: -6
+                                    enabled: page.editable
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: Controls.removeBinding(row.modelData.control, chip.index)
@@ -158,7 +164,7 @@ ScrollView {
                         visible: !row.capturing
                         height: 30
                         text: "Add"
-                        enabled: !Controls.locked && Controls.capturing < 0
+                        enabled: page.editable && Controls.capturing < 0
                         onClicked: Controls.startCapture(row.modelData.control)
                     }
                 }
@@ -171,6 +177,7 @@ ScrollView {
             label: "Steering speed"
             help: "How fast keys turn the wheel. Simulates Analogue Steering"
             visible: Controls.device === 0
+            enabled: page.editable
             ValueSlider {
                 from: 0.5; to: 10; stepSize: 0.5
                 value: Controls.steerSpeed
@@ -182,6 +189,7 @@ ScrollView {
             label: "Dead zone"
             help: "How far a stick or wheel moves before the game reads the input."
             visible: Controls.device > 0
+            enabled: page.editable
             ValueSlider {
                 from: 0; to: 0.5; stepSize: 0.01
                 value: Controls.deadzone
@@ -193,6 +201,7 @@ ScrollView {
             label: "Force feedback"
             help: "Adjusts Rumble Intensity"
             visible: Controls.device > 0
+            enabled: page.editable
             ValueSlider {
                 from: 0; to: 2; stepSize: 0.05
                 value: Controls.forceFeedback
@@ -203,6 +212,7 @@ ScrollView {
         SettingRow {
             label: "Background input"
             help: "Allows the game to be controlled while the window is not in focus"
+            enabled: page.editable
             Toggle { checked: Controls.backgroundInput; onToggled: Controls.backgroundInput = checked }
         }
         Text {

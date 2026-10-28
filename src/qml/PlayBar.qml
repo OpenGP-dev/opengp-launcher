@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -163,6 +165,7 @@ Rectangle {
         // Beside the progress, not under it: the bar has room for three lines.
         PillButton {
             visible: bar.building
+            enabled: !Launcher.stopping
             text: "Stop"
             onClicked: Launcher.cancelBuild()
         }

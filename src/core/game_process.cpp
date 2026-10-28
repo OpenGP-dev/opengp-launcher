@@ -14,6 +14,7 @@
 #include <cerrno>
 #include <fcntl.h>
 #include <spawn.h>
+#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
 extern char** environ;
@@ -238,5 +239,28 @@ GameProcess::Result GameProcess::wait() {
 }
 
 #endif
+
+bool game_running(const std::filesystem::path& user_dir, const std::string& game_id) {
+  // Locked for a moment if no game holds it, and let go at once (a game
+  // starting then waits for it).
+  const std::filesystem::path path = user_dir / (".lock-" + game_id);
+  bool held = false;
+#ifdef _WIN32
+  const HANDLE h = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                               nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (h == INVALID_HANDLE_VALUE) return false;
+  OVERLAPPED at{};
+  if (LockFileEx(h, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &at)) UnlockFileEx(h, 0, 1, 0, &at);
+  else held = GetLastError() == ERROR_LOCK_VIOLATION;
+  CloseHandle(h);
+#else
+  const int fd = ::open(path.c_str(), O_RDONLY | O_CLOEXEC);
+  if (fd < 0) return false;
+  if (::flock(fd, LOCK_EX | LOCK_NB) == 0) ::flock(fd, LOCK_UN);
+  else held = errno == EWOULDBLOCK;
+  ::close(fd);
+#endif
+  return held;
+}
 
 }  // namespace launcher

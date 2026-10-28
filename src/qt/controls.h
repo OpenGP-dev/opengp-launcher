@@ -34,6 +34,9 @@ class Controls : public QObject {
   Q_PROPERTY(bool backgroundInput READ backgroundInput WRITE setBackgroundInput NOTIFY changed)
   Q_PROPERTY(QStringList connected READ connected NOTIFY devicesChanged)
   Q_PROPERTY(bool locked READ locked NOTIFY changed)
+  // controls.toml could not be read, so the games use the defaults: nothing is
+  // saved over it until the player restores the defaults.
+  Q_PROPERTY(bool loadFailed READ loadFailed NOTIFY changed)
   Q_PROPERTY(QString error READ error NOTIFY changed)
 
  public:
@@ -56,11 +59,13 @@ class Controls : public QObject {
   void setBackgroundInput(bool v);
   QStringList connected() const { return connected_; }
   bool locked() const { return !input_; }
+  bool loadFailed() const { return load_failed_; }
   QString error() const { return error_; }
 
   Q_INVOKABLE void startCapture(int control);
   Q_INVOKABLE void cancelCapture();
   Q_INVOKABLE void removeBinding(int control, int index);
+  // After a file that could not be read, sets it aside as controls.toml.bad first.
   Q_INVOKABLE void restoreDefaults();
 
   // While a game runs it has the controllers (and rewrites the file): let go
@@ -80,6 +85,8 @@ class Controls : public QObject {
  private:
   void start();
   void pump();
+  // Whether the controls can change now; if not, puts the page's controls back.
+  bool editable();
   void save();
   void update_connected();
   input::HostInput::DeviceKind kind() const;
@@ -90,6 +97,7 @@ class Controls : public QObject {
   QTimer timer_;
   int device_ = 0;
   int capture_control_ = -1;
+  bool load_failed_ = false;
   QStringList connected_;
 };
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 
 // The few icons the launcher needs, drawn (no icon font): plus, gear,

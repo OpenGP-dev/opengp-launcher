@@ -3,7 +3,10 @@
 #include "core/news.h"
 
 #include <algorithm>
+#include <array>
+#include <charconv>
 #include <cstdio>
+#include <string_view>
 
 #define TOML_EXCEPTIONS 0
 #include <toml.hpp>
@@ -23,6 +26,20 @@ std::string date_text(const toml::node_view<const toml::node>& node) {
   const bool ok = s.size() == 10 && s[4] == '-' && s[7] == '-' &&
                   std::all_of(s.begin(), s.end(), [](char c) { return (c >= '0' && c <= '9') || c == '-'; });
   return ok ? s : std::string();
+}
+
+// "x.y.z", or with a "v" in front: three numbers and nothing else.
+bool parse_version(std::string_view text, std::array<int, 3>* version) {
+  if (text.starts_with('v')) text.remove_prefix(1);
+  for (std::size_t i = 0; i < version->size(); ++i) {
+    if (i > 0 && !text.starts_with('.')) return false;
+    if (i > 0) text.remove_prefix(1);
+    if (text.empty() || text[0] < '0' || text[0] > '9') return false;  // no sign, no space
+    const auto [end, ec] = std::from_chars(text.data(), text.data() + text.size(), (*version)[i]);
+    if (ec != std::errc()) return false;
+    text.remove_prefix(static_cast<std::size_t>(end - text.data()));
+  }
+  return text.empty();
 }
 
 }  // namespace
@@ -75,6 +92,17 @@ bool parse_news(const std::string& text, std::vector<NewsItem>* items, int* skip
 
 int unread_news(const std::vector<NewsItem>& items, const std::set<std::string>& seen) {
   return static_cast<int>(std::count_if(items.begin(), items.end(), [&](const NewsItem& i) { return !seen.count(i.id); }));
+}
+
+std::string release_version(const std::string& tag) {
+  std::array<int, 3> v{};
+  if (!parse_version(tag, &v)) return {};
+  return std::to_string(v[0]) + '.' + std::to_string(v[1]) + '.' + std::to_string(v[2]);
+}
+
+bool newer_version(const std::string& a, const std::string& b) {
+  std::array<int, 3> va{}, vb{};
+  return parse_version(a, &va) && parse_version(b, &vb) && va > vb;
 }
 
 }  // namespace launcher

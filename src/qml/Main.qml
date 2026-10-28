@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Dialogs
@@ -12,6 +14,7 @@ ApplicationWindow {
     property bool home: true  // Home, else the chosen game's page
     property bool dx: false   // GP DX's page (not OpenGP's game) instead of either
     property int tab: 0       // the game's page: 0 play, 1 saves & data
+    property bool closeAfterBuild: false  // closed during an install or a build: once it has stopped
 
     visible: true
     minimumWidth: 1000
@@ -43,6 +46,17 @@ ApplicationWindow {
             window.raise()
             window.requestActivate()
         }
+        function onBuildingChanged() {
+            if (window.closeAfterBuild && Launcher.buildingId.length === 0) window.close()
+        }
+    }
+    // Closed during an install or a build: it is stopped first, with the
+    // window still up, instead of the launcher carrying on without one.
+    onClosing: close => {
+        if (Launcher.buildingId.length === 0) return
+        close.accepted = false
+        closeAfterBuild = true
+        Launcher.cancelBuild()
     }
     Component.onCompleted: {
         updateGame()

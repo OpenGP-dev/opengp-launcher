@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Writes the launcher's news: the news.toml in the news gist (docs/news.md).
 
     python tools/news.py list

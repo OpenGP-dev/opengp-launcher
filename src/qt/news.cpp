@@ -3,6 +3,8 @@
 #include "qt/news.h"
 
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QNetworkReply>
 #include <QQmlEngine>
 #include <QRegularExpression>
@@ -16,6 +18,7 @@ namespace launcher {
 namespace {
 
 constexpr qint64 kMaxFeed = 256 * 1024;
+constexpr qint64 kMaxRelease = 1024 * 1024;  // GitHub's answer: the release with its notes and files
 constexpr int kRefreshMs = 30 * 60 * 1000;
 
 Launcher& app() { return *Launcher::instance(); }
@@ -61,8 +64,10 @@ void News::setEnabled(bool enabled) {
 }
 
 void News::refresh() {
+  if (!enabled()) return;
+  check_release();
   const QUrl feed(url());
-  if (!enabled() || feed.isEmpty()) return;
+  if (feed.isEmpty()) return;
   if (feed.isLocalFile()) {  // for trying a feed out (launcher.toml [news] url)
     QFile f(feed.toLocalFile());
     if (f.open(QIODevice::ReadOnly) && show(f.read(kMaxFeed))) offline_ = false;
@@ -96,6 +101,47 @@ void News::refresh() {
     } else {
       offline_ = true;
     }
+    emit changed();
+  });
+}
+
+void News::check_release() {
+  // Only an installed package has an OpenGP version of its own to compare.
+  const QUrl releases(QStringLiteral(LAUNCHER_RELEASES_URL));
+  const std::string current = app().home().pkg.version;
+  if (!app().isPackage() || current.empty() || !app().homeError().isEmpty() || releases.isEmpty()) return;
+  // https, or a local file to try it out.
+  if (releases.scheme() != QLatin1String("https") && !releases.isLocalFile()) return;
+  QNetworkRequest request(releases);
+  request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("OpenGP-Launcher/" LAUNCHER_VERSION));
+  request.setRawHeader("Accept", "application/vnd.github+json");
+  QNetworkReply* reply = network_.get(request);
+  connect(reply, &QNetworkReply::downloadProgress, reply, [reply](qint64 received, qint64) {
+    if (received > kMaxRelease) reply->abort();
+  });
+  connect(reply, &QNetworkReply::finished, this, [this, reply, current] {
+    reply->deleteLater();
+    // Anything wrong (offline, no release yet, GitHub's limit of 60 an hour) shows nothing new.
+    if (reply->error() != QNetworkReply::NoError) {
+      qWarning("update check: %s", qPrintable(reply->errorString()));
+      return;
+    }
+    QJsonParseError error;
+    const QJsonObject release = QJsonDocument::fromJson(reply->readAll(), &error).object();
+    if (error.error != QJsonParseError::NoError) {
+      qWarning("update check: %s", qPrintable(error.errorString()));
+      return;
+    }
+    const std::string version = release_version(release.value(QLatin1String("tag_name")).toString().toStdString());
+    const QString page = release.value(QLatin1String("html_url")).toString();
+    if (version.empty() || !page.startsWith(QLatin1String("https://github.com/")) ||
+        release.value(QLatin1String("draft")).toBool() || release.value(QLatin1String("prerelease")).toBool()) {
+      qWarning("update check: not a published release with an x.y.z tag_name and an https://github.com/ html_url");
+      return;
+    }
+    const bool newer = newer_version(version, current);
+    new_version_ = newer ? QString::fromStdString(version) : QString();
+    new_version_page_ = newer ? page : QString();
     emit changed();
   });
 }

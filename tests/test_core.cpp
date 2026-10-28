@@ -208,6 +208,26 @@ title = "Same id again"
   CHECK_FALSE(parse_news("title = \"no news\"", &items, &skipped, &error));
 }
 
+TEST_CASE("a release's version is read from its tag and compared by number") {
+  CHECK(release_version("v1.0.2") == "1.0.2");
+  CHECK(release_version("1.0.2") == "1.0.2");
+  CHECK(release_version("v01.0.10") == "1.0.10");
+  for (const char* tag : {"", "v", "1.0", "1.0.2.3", "1.0.2-rc1", "v1.0.2 ", " 1.0.2", "V1.0.2", "vv1.0.2", "1..2",
+                          "1.0.-2", "+1.0.2", "1.0.x", "latest", "99999999999.0.0"})
+    CHECK_MESSAGE(release_version(tag).empty(), tag);
+  CHECK(newer_version("1.0.2", "1.0.1"));
+  CHECK(newer_version("v1.0.2", "1.0.1"));
+  CHECK(newer_version("1.0.10", "1.0.9"));
+  CHECK(newer_version("1.1.0", "1.0.99"));
+  CHECK(newer_version("2.0.0", "1.9.9"));
+  CHECK_FALSE(newer_version("1.0.1", "1.0.1"));
+  CHECK_FALSE(newer_version("1.0.0", "1.0.1"));
+  CHECK_FALSE(newer_version("1.0.9", "1.0.10"));
+  CHECK_FALSE(newer_version("1.0.2-rc1", "1.0.1"));
+  CHECK_FALSE(newer_version("1.0.2", "1.0.1-dev"));
+  CHECK_FALSE(newer_version("1.0.2", ""));
+}
+
 TEST_CASE("TPL textures decode, and screens are joined from their tiles") {
   // A TPL with one 4x4 RGB5A3 image, every texel opaque red (0xFC00).
   std::vector<std::uint8_t> tpl = {0x00, 0x20, 0xAF, 0x30, 0, 0, 0, 1, 0, 0, 0, 0x0C,  // magic, 1 image, table at 0x0C
@@ -328,6 +348,21 @@ TEST_CASE("a game that restarts itself is followed until it really ends") {
 
   GameProcess missing;
   CHECK_FALSE(missing.start(utf8(dir.path / "no-such-game"), {}, log, &error));
+}
+
+TEST_CASE("a game started elsewhere is running while it holds its lock") {
+  TempDir dir("opengp_launcher_running");
+  const fs::path user = dir.path / "user";
+  // No lock file: no game, and no file made.
+  CHECK_FALSE(game_running(user, "GGPE02"));
+  CHECK_FALSE(fs::exists(user / ".lock-GGPE02"));
+  // One left by a game that has ended.
+  write(user / ".lock-GGPE01", "");
+  CHECK_FALSE(game_running(user, "GGPE01"));
+  // Held as a running game holds it (until test_core exits).
+  REQUIRE(app::lock_user_dir(user, "GGPE02"));
+  CHECK(game_running(user, "GGPE02"));
+  CHECK_FALSE(game_running(user, "GGPE01"));
 }
 
 TEST_CASE("a source tree's game is built with CMake from the player's image") {

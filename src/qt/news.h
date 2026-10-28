@@ -3,7 +3,9 @@
 // The news feed for QML: downloaded (news.toml, see docs/news.md and
 // core/news.h) when the launcher starts and every half hour, kept in
 // user/news.toml for when the feed cannot be reached. With no news at all, the
-// newest section of OpenGP's CHANGELOG.md stands in.
+// newest section of OpenGP's CHANGELOG.md stands in. At the same times, in an
+// installed package, OpenGP's latest release (LAUNCHER_RELEASES_URL) for the
+// notice on Home that a newer OpenGP is out. Turning the news off turns both off.
 #pragma once
 
 #include <QNetworkAccessManager>
@@ -30,9 +32,13 @@ class News : public QObject {
   Q_PROPERTY(bool offline READ offline NOTIFY changed)       // showing the copy kept from before
   Q_PROPERTY(QString whatsNew READ whatsNew NOTIFY changed)  // the changelog's newest section (Markdown), when there is no news
   Q_PROPERTY(QString whatsNewTitle READ whatsNewTitle NOTIFY changed)
+  Q_PROPERTY(QString newVersion READ newVersion NOTIFY changed)  // a newer OpenGP than the package's ("1.0.2"), or ""
+  Q_PROPERTY(QString newVersionPage READ newVersionPage NOTIFY changed)  // its release page
 
  public:
-  explicit News(QObject* parent = nullptr);
+  // No default parent: with a default constructor QML would make a second
+  // News of its own (fetching everything twice) instead of calling create().
+  explicit News(QObject* parent);
   static News* create(QQmlEngine*, QJSEngine*);
 
   QVariantList items() const;
@@ -42,6 +48,8 @@ class News : public QObject {
   bool offline() const { return offline_; }
   QString whatsNew() const { return whats_new_; }
   QString whatsNewTitle() const { return whats_new_title_; }
+  QString newVersion() const { return enabled() ? new_version_ : QString(); }
+  QString newVersionPage() const { return enabled() ? new_version_page_ : QString(); }
 
   Q_INVOKABLE void refresh();
   Q_INVOKABLE void markAllSeen();
@@ -54,6 +62,7 @@ class News : public QObject {
   QString cache_path() const;
   bool show(const QByteArray& text);
   void read_changelog();
+  void check_release();
 
   static inline News* instance_ = nullptr;
   QNetworkAccessManager network_;
@@ -62,6 +71,7 @@ class News : public QObject {
   bool offline_ = false;
   QByteArray etag_;
   QString whats_new_, whats_new_title_;
+  QString new_version_, new_version_page_;
 };
 
 }  // namespace launcher
