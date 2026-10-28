@@ -30,8 +30,8 @@ Item {
             }
             Text {
                 Layout.fillWidth: true
-                text: "OpenGP doesn't play GP DX. It is a different kind of game from GP 1 and GP 2, "
-                      + "and other projects already run it on a PC."
+                text: "OpenGP doesn't play GP DX. GP 1 and GP 2 are Triforce games; GP DX runs on a "
+                      + "Windows PC (Namco System ES3), so it needs a loader, not a port."
                 color: Theme.chalk
                 font.pixelSize: Theme.lead + 1
                 lineHeight: 1.25
@@ -39,32 +39,13 @@ Item {
             }
 
             Card {
-                title: "Why not in OpenGP"
-                body: "GP 1 and GP 2 run on Triforce, arcade hardware built from a GameCube; OpenGP is a port "
-                      + "of those two games' own code to the PC. GP DX (2013) runs on Namco System ES3, which "
-                      + "is a Windows PC (Windows Embedded Standard 7), so it is a PC program already. What it "
-                      + "needs is the cabinet around it: the wheel and pedals, the card reader, the camera and "
-                      + "the cabinet's I/O. That is a loader's job, not a port's."
-            }
-
-            Card {
-                title: "On a Windows PC: TeknoParrot"
+                title: "Play it with TeknoParrot"
                 tag: "Windows only"
-                body: "TeknoParrot runs the game's own files and stands in for the cabinet. Its compatibility "
-                      + "list has four versions of GP DX, all working perfectly: 1.10, 1.18, the US version "
-                      + "and US 1.06.\n\n"
-                      + "1. Install TeknoParrot, with the DirectX End-User Runtimes (June 2010) and the "
-                      + "Visual C++ redistributables its download page asks for.\n"
-                      + "2. In TeknoParrotUI, add the profile for your version of the game and point it at "
-                      + "`MK_AGP3_FINAL.exe` in the game's folder.\n"
-                      + "3. Set up the controls (a wheel, a gamepad or the keyboard), and the window size if "
-                      + "you want something other than 1360×768.\n"
-                      + "4. Mario Cards are Banapassport cards: signed in on teknoparrot.com, make a card ID "
-                      + "in your online profile for the game and enter it in TeknoParrotUI. In the game, "
-                      + "press **F2** to touch the card.\n"
-                      + "5. If you want them: the webcam (the profile's webcam option) and force feedback "
-                      + "(TeknoParrot's FFB Blaster, or FFBArcadePlugin).\n\n"
-                      + "TeknoParrot is free; its paid plans add extras such as online play."
+                body: "1. Install TeknoParrot, with the DirectX (June 2010) and Visual C++ runtimes.\n"
+                      + "2. Add the GP DX profile for your version and choose `MK_AGP3_FINAL.exe`.\n"
+                      + "3. Set up your controls.\n"
+                      + "4. For Mario Cards, make a card ID in your TeknoParrot online profile. "
+                      + "Press **F2** in the game to use it."
                 links: [
                     { label: "TeknoParrot", url: "https://teknoparrot.com/en" },
                     { label: "GP DX on TeknoParrot", url: "https://teknoparrot.com/en/Compatibility/GameDetail/MKDX" },
@@ -74,32 +55,22 @@ Item {
 
             Card {
                 title: "If it goes wrong"
-                body: "- **A graphics error or a tiny window at the start**: DirectX files are missing. "
-                      + "Install the DirectX End-User Runtimes (June 2010).\n"
-                      + "- **The camera's picture is turned the wrong way**: the game can't fix this. Turn "
-                      + "the camera itself, or use another camera.\n"
-                      + "- **Anything else**: TeknoParrot's own page for the game lists what is known."
+                body: "- **Graphics error or a tiny window**: install the DirectX runtimes.\n"
+                      + "- **Camera picture turned**: turn the camera itself."
             }
 
             Card {
-                title: "On a Mac or Linux"
-                body: "TeknoParrot has no macOS version. Its Linux build is experimental, and we don't know "
-                      + "of GP DX running on it, or under Wine or Proton. For now, GP DX needs a Windows PC "
-                      + "or a cabinet."
+                title: "Mac, Linux or a cabinet"
+                body: "TeknoParrot has no Mac version, and its Linux build is untested with GP DX. "
+                      + "Otherwise, GP DX cabinets do come up second-hand."
             }
 
-            Card {
-                title: "The real thing"
-                body: "A GP DX cabinet has everything the game expects: the wheel with force feedback, the "
-                      + "card reader, the camera and linked play. Cabinets do come up second-hand, from "
-                      + "arcades and their suppliers."
-            }
-
-            Card {
-                title: "The game's files"
-                body: "GP DX comes on the cabinet's hard drive. Neither OpenGP nor TeknoParrot includes it, "
-                      + "and TeknoParrot won't link to it: use a copy of a drive you own. The launcher can't "
-                      + "add GP DX, and this page doesn't download anything."
+            Text {
+                Layout.fillWidth: true
+                text: "Use a copy of a cabinet drive you own: neither OpenGP nor TeknoParrot includes the game."
+                color: Theme.dim
+                font.pixelSize: Theme.small
+                wrapMode: Text.WordWrap
             }
 
             Item { implicitHeight: 4 }

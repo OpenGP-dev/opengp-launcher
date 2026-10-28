@@ -453,7 +453,7 @@ TEST_CASE("a disc image of another release says which game it is, and is not rec
   // The launcher keeps the reason on that game's page.
   CHECK_FALSE(add_image(home, utf8(dir.path / "game.iso"), &id, &error));
   CHECK(id == "GGPE02");
-  CHECK(error.find("not the release OpenGP supports") != std::string::npos);
+  CHECK(error.find("not a release OpenGP supports") != std::string::npos);
   CHECK(app::remembered_image(home.user_dir, "GGPE02").empty());
 
   // Not a disc image at all: no game to say.
