@@ -1,0 +1,177 @@
+name: Release
+
+# Builds the launcher's release for Windows, Linux and macOS: Release builds
+# with Qt beside them (cmake --install, see src/CMakeLists.txt), as zips and a
+# tarball. Run by hand (Actions > Release > Run workflow) for the builds as
+# artifacts, or by pushing a tag v<version> for a draft release with them
+# attached. Never on pushes or pull requests: the repository is private, so
+# every run costs Actions minutes (macOS ten times Linux, Windows twice).
+#
+# OpenGP (the submodule) is a private repository too: until it is public, the
+# secret OPENGP_CHECKOUT_TOKEN must hold a token that can read OpenGP-dev/OpenGP
+# (a fine-grained token with Contents: read on both repositories).
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+env:
+  QT_VERSION: '6.10.3'
+
+jobs:
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          token: ${{ secrets.OPENGP_CHECKOUT_TOKEN || github.token }}
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          cache: true
+      - name: Build, test and install
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $ErrorActionPreference = 'Stop'
+          pip install ninja
+          # Visual Studio's x64 environment and LLVM's clang-cl, as for a developer.
+          . .\external\OpenGP\tools\devshell.ps1
+          $env:QTDIR = $env:QT_ROOT_DIR
+          cmake --preset clang-cl -DCMAKE_BUILD_TYPE=Release -DLAUNCHER_DEV_HOME= -DLAUNCHER_BUILD_TESTS=ON `
+            -DCMAKE_INSTALL_BINDIR=. -DCMAKE_INSTALL_PREFIX="$PWD/stage"
+          cmake --build --preset clang-cl
+          ctest --preset clang-cl
+          cmake --install build/clang-cl
+          # The MSVC runtime the launcher and Qt were built against, beside them.
+          $crt = Get-ChildItem "$env:VCToolsRedistDir\x64" -Directory -Filter 'Microsoft.VC*.CRT' | Select-Object -First 1
+          Copy-Item "$($crt.FullName)\*.dll" stage
+          $version = [regex]::Match((Get-Content CMakeLists.txt -Raw), 'project\(OpenGPLauncher VERSION ([0-9.]+)').Groups[1].Value
+          $name = "OpenGP-Launcher-$version-windows-x64"
+          Rename-Item stage $name
+          Compress-Archive -Path $name -DestinationPath "$name.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenGP-Launcher-windows-x64
+          path: OpenGP-Launcher-*-windows-x64.zip
+
+  linux:
+    name: Linux
+    # As OpenGP's own Linux package: the oldest supported runner, so the
+    # launcher runs on older distributions too (glibc 2.35).
+    runs-on: ubuntu-22.04
+    env:
+      CC: gcc-12
+      CXX: g++-12
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          token: ${{ secrets.OPENGP_CHECKOUT_TOKEN || github.token }}
+      - name: Install GCC 12, Ninja, and what SDL3 and Qt build against
+        run: >
+          sudo apt-get update && sudo apt-get install -y g++-12 ninja-build
+          libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev
+          libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev wayland-protocols libdecor-0-dev
+          libasound2-dev libpulse-dev libpipewire-0.3-dev libudev-dev libdbus-1-dev
+          libgl1-mesa-dev libegl1-mesa-dev libfontconfig1-dev libfreetype-dev
+          libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0
+          libxcb-shape0 libxcb-xinerama0 libxcb-xkb1
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          cache: true
+      - name: Build, test and install
+        run: |
+          cmake -S . -B build/release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
+            -DCMAKE_DISABLE_FIND_PACKAGE_SDL3=ON -DLAUNCHER_DEV_HOME= -DLAUNCHER_BUILD_TESTS=ON \
+            -DCMAKE_INSTALL_BINDIR=. -DCMAKE_INSTALL_PREFIX="$PWD/stage"
+          cmake --build build/release
+          ctest --test-dir build/release --output-on-failure
+          cmake --install build/release
+          version=$(sed -n 's/^project(OpenGPLauncher VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          name=OpenGP-Launcher-$version-linux-x64
+          mv stage "$name"
+          tar -czf "$name.tar.gz" "$name"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenGP-Launcher-linux-x64
+          path: OpenGP-Launcher-*-linux-x64.tar.gz
+
+  macos:
+    name: macOS
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          token: ${{ secrets.OPENGP_CHECKOUT_TOKEN || github.token }}
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: mac
+          target: desktop
+          arch: clang_64
+          cache: true
+      - name: Install Ninja
+        run: brew install ninja
+      - name: Build, test and install
+        run: |
+          # Homebrew's libraries are built for the runner's macOS only: none of them.
+          cmake -S . -B build/release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DCMAKE_DISABLE_FIND_PACKAGE_SDL3=ON \
+            -DLAUNCHER_DEV_HOME= -DLAUNCHER_BUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX="$PWD/stage"
+          cmake --build build/release
+          ctest --test-dir build/release --output-on-failure
+          cmake --install build/release
+      - name: Apple Silicon only, signed, zipped
+        run: |
+          app=stage/OpenGP.app
+          # Qt's libraries are universal; OpenGP's package is arm64 only.
+          find "$app" -type f | while IFS= read -r f; do
+            file -b "$f" | grep -q Mach-O || continue
+            [ "$(lipo -archs "$f")" = arm64 ] || { lipo "$f" -thin arm64 -output "$f.thin" && mv "$f.thin" "$f"; }
+          done
+          xattr -cr stage
+          # Ad hoc: Apple Silicon runs only signed code. Not notarised.
+          codesign --force --deep --sign - "$app"
+          codesign --verify --deep --strict "$app"
+          version=$(sed -n 's/^project(OpenGPLauncher VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          name=OpenGP-Launcher-$version-macos-arm64
+          mv stage "$name"
+          ditto -c -k --norsrc --noextattr --keepParent "$name" "$name.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenGP-Launcher-macos-arm64
+          path: OpenGP-Launcher-*-macos-arm64.zip
+
+  release:
+    name: Draft release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: Attach the builds to a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          sha256sum OpenGP-Launcher-* > SHA256SUMS.txt
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 ||
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "OpenGP Launcher ${TAG#v}" \
+              --notes "Put it in your OpenGP folder: see the README in each archive."
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber OpenGP-Launcher-* SHA256SUMS.txt

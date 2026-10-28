@@ -90,3 +90,52 @@ set_target_properties(opengp_launcher PROPERTIES
   MACOSX_BUNDLE_GUI_IDENTIFIER dev.opengp.launcher
   MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
   MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION})
+
+# cmake --install lays the launcher out for a release, with the Qt it needs
+# beside it (windeployqt, macdeployqt, or Qt's own deploy on Linux): an app
+# bundle on macOS; elsewhere the executable in CMAKE_INSTALL_BINDIR (a release
+# passes ".", as OpenGP's package has its executable at the top) and Qt's
+# libraries, plug-ins and QML modules in lib/, plugins/ and qml/.
+include(GNUInstallDirs)
+if(UNIX AND NOT APPLE)
+  file(RELATIVE_PATH bin_to_lib "/p/${CMAKE_INSTALL_BINDIR}" "/p/${CMAKE_INSTALL_LIBDIR}")
+  set_target_properties(opengp_launcher PROPERTIES INSTALL_RPATH "$ORIGIN/${bin_to_lib}")
+endif()
+install(TARGETS opengp_launcher BUNDLE DESTINATION . RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+set(deploy_options)
+if(WIN32)
+  # No database drivers (nothing here uses SQL; some need libraries Windows lacks).
+  set(deploy_options DEPLOY_TOOL_OPTIONS --skip-plugin-types sqldrivers)
+endif()
+# The compiler's runtime: a release copies its DLLs in itself.
+qt_generate_deploy_qml_app_script(TARGET opengp_launcher OUTPUT_SCRIPT deploy_script
+  NO_TRANSLATIONS NO_COMPILER_RUNTIME ${deploy_options})
+install(SCRIPT ${deploy_script})
+if(APPLE)
+  # macdeployqt has no option for it: the database drivers, which need
+  # libraries macOS lacks (ODBC, Mimer, PostgreSQL).
+  install(CODE "file(REMOVE_RECURSE \"\${CMAKE_INSTALL_PREFIX}/OpenGP.app/Contents/PlugIns/sqldrivers\")")
+endif()
+
+# What a release has beside the launcher: how to install it, and the licences.
+if(APPLE)
+  set(readme ${PROJECT_SOURCE_DIR}/packaging/README-macos.txt)
+elseif(WIN32)
+  set(readme ${PROJECT_SOURCE_DIR}/packaging/README-windows.txt)
+else()
+  set(readme ${PROJECT_SOURCE_DIR}/packaging/README-linux.txt)
+endif()
+set(VERSION ${PROJECT_VERSION})
+set(QT_VERSION ${Qt6_VERSION})
+configure_file(${readme} ${CMAKE_CURRENT_BINARY_DIR}/README.txt @ONLY)
+configure_file(${PROJECT_SOURCE_DIR}/packaging/THIRD-PARTY-NOTICES.txt ${CMAKE_CURRENT_BINARY_DIR}/THIRD-PARTY-NOTICES.txt @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/README.txt ${CMAKE_CURRENT_BINARY_DIR}/THIRD-PARTY-NOTICES.txt DESTINATION .)
+install(FILES ${PROJECT_SOURCE_DIR}/LICENSE DESTINATION . RENAME LICENSE.txt)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/fonts/OFL.txt DESTINATION licenses RENAME M-PLUS-Rounded-1c-OFL.txt)
+install(FILES ${OPENGP_SOURCE_DIR}/thirdparty/tomlplusplus/LICENSE DESTINATION licenses RENAME tomlplusplus-MIT.txt)
+# SDL3's, if OpenGP fetched it (a release always does: it links SDL3 in).
+include(FetchContent)
+FetchContent_GetProperties(SDL3 SOURCE_DIR sdl3_source)
+if(sdl3_source)
+  install(FILES ${sdl3_source}/LICENSE.txt DESTINATION licenses RENAME SDL3-zlib.txt)
+endif()

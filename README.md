@@ -75,6 +75,18 @@ Settings and saves are in `<home>/user/` (or `--user-dir`): the games' `settings
 `controls.toml`, cards and data; the launcher's own `launcher.toml`; `art/`, `logs/` (each game's
 last two runs), `backups/` and `news.toml` (the news last downloaded).
 
+## Releasing
+
+`cmake --install` lays a build out for release, with Qt beside it (Qt's own deploy tools): `OpenGP.app`
+on macOS; elsewhere `OpenGP` with Qt in `lib/`, `plugins/` and `qml/` (configure with
+`-DCMAKE_INSTALL_BINDIR=.`), and on every system a `README.txt` on installing it, the licences and
+the third-party notices (`packaging/`).
+
+The **Release** workflow (`.github/workflows/release.yml`) builds Windows, Linux and macOS releases
+that way. Run it from the Actions tab for the builds as artifacts, or push a tag `v<version>` for a
+draft release with them attached. It never runs on pushes. While OpenGP is a private repository, the
+secret `OPENGP_CHECKOUT_TOKEN` must hold a token that can read it.
+
 ## How it works
 
 | | |
