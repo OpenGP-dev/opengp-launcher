@@ -4,7 +4,7 @@ The launcher for [OpenGP](https://github.com/OpenGP-dev/OpenGP), the native PC p
 Arcade GP 2 and GP 1. In one window:
 
 - **Home**: each game with the next thing to do (add its disc image, install or build it, play it),
-  and news from the OpenGP team (see [docs/news.md](docs/news.md)).
+  and news from the OpenGP team
 - **Play** either game (GP 2 first; GP 1 when you have it), with one-off options: start in the test
   menu, or log the game's own messages.
 - **Game management**: add your disc image of each game, and build the game from it: in an
