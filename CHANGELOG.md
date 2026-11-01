@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.0.1 (2026-11-02)
+
+With OpenGP 1.0.1, the launcher can update OpenGP, itself included. Launcher 1.0.0 can't: from it,
+download 1.0.1 by hand once.
+
+- **Updates**: when a new release is out, a notice at the top of every page offers it ("OpenGP
+  1.0.2 is out.", or "OpenGP Launcher 1.0.2 is out." for a new launcher alone). **Update**
+  downloads the package for your computer, checks it against the SHA-256 GitHub gives for it, makes
+  sure its launcher starts, puts it in place of this version and opens the new launcher. Your
+  saves, settings, disc images, the compiler and the games you built stay; after a new OpenGP, each
+  game shows **Update** to build it for that version. If anything goes wrong, nothing changes and
+  the launcher says why. While a game runs or is being built, the update waits for it to end.
+  **Stop** stops a download. Without a package for your computer, **Download** opens the release
+  page instead.
+- The launcher looks for new releases among its own (OpenGP-dev/opengp-launcher), which carry
+  OpenGP's packages, instead of OpenGP's, so it sees a new launcher as well as a new OpenGP.
+- **Home**: the news, or what's new in this version, down the left and taller; the games down the
+  right.
+
 ## 1.0.0 (2026-11-02)
 
 The first release of the OpenGP Launcher, with OpenGP 1.0.1, OpenGP's first public release. The

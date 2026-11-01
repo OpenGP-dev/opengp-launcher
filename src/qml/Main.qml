@@ -15,6 +15,8 @@ ApplicationWindow {
     property bool dx: false   // GP DX's page (not OpenGP's game) instead of either
     property int tab: 0       // the game's page: 0 play, 1 saves & data
     property bool closeAfterBuild: false  // closed during an install or a build: once it has stopped
+    // Room the update notice takes at the top right, which titles under it leave.
+    readonly property real noticeSpace: updateNotice.visible ? updateNotice.width + 24 : 0
 
     visible: true
     minimumWidth: 1000
@@ -132,7 +134,9 @@ ApplicationWindow {
                             source: window.game.logo || ""
                             visible: status === Image.Ready
                             height: 120
-                            width: Math.min(implicitWidth * height / Math.max(1, implicitHeight), parent.width)
+                            // Clear of the update notice, which is level with it.
+                            width: Math.min(implicitWidth * height / Math.max(1, implicitHeight),
+                                            parent.width - window.noticeSpace)
                             fillMode: Image.PreserveAspectFit
                             horizontalAlignment: Image.AlignLeft
                             smooth: true
@@ -205,6 +209,16 @@ ApplicationWindow {
             DxView {
                 anchors.fill: parent
                 visible: Launcher.homeError.length === 0 && window.dx
+                noticeSpace: window.noticeSpace
+            }
+
+            // An update, on every page, over what is there.
+            UpdateNotice {
+                id: updateNotice
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.topMargin: 40
+                anchors.rightMargin: 48
             }
 
             // OpenGP is not where the launcher looked.

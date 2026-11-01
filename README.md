@@ -25,7 +25,7 @@ add it, into `user/art/`; none are part of the launcher.
 The launcher builds OpenGP's own libraries (settings, controls, disc images, the installer) as part
 of itself, from the OpenGP submodule in `external/OpenGP`, so it always reads and writes the files
 exactly as the games do. Each launcher release is built on the OpenGP release the submodule points
-at: launcher 1.0.0 on OpenGP 1.0.1.
+at: launcher 1.0.1 on OpenGP 1.0.1.
 
 You need what OpenGP needs (CMake 3.25+, Ninja, Clang or GCC; clang-cl on Windows) and **Qt 6.8 or
 later** with Qt Quick, Qt Quick Controls and Qt Network. For example, with
@@ -51,7 +51,7 @@ Options:
 | `OPENGP_SOURCE_DIR` | another OpenGP checkout instead of the submodule (to work on both at once) |
 | `LAUNCHER_DEV_HOME` | the OpenGP folder a development build looks after (default: `OPENGP_SOURCE_DIR`; empty for a release) |
 | `LAUNCHER_NEWS_URL` | the news feed (`news.toml`); empty for none |
-| `LAUNCHER_RELEASES_URL` | OpenGP's latest release, for the notice on Home that a newer OpenGP is out (default: GitHub's API for OpenGP-dev/OpenGP, `.../releases/latest`); empty for none |
+| `LAUNCHER_RELEASES_URL` | the latest release, for updates (default: GitHub's API for OpenGP-dev/opengp-launcher, `.../releases/latest`); empty for none |
 
 OpenGP's package workflow builds the launcher for each installer package, from the OpenGP release it
 packages, and installs it into the package folder. `OpenGP` (`OpenGP.exe`, `OpenGP.app`) goes at the
@@ -97,14 +97,15 @@ OpenGP --screenshot-ui FILE [--view VIEW]    a picture of the window, then quit
 
 Settings and saves are in `<home>/user/` (or `--user-dir`): the games' `settings.toml`,
 `controls.toml`, cards and data; the launcher's own `launcher.toml`; `art/`, `logs/` (each game's
-last two runs), `backups/` and `news.toml` (the news last downloaded).
+last two runs), `backups/` and `news.toml` (the news last downloaded). An update is downloaded and
+unpacked into `<home>/update/`, which goes once the new launcher has started.
 
 ## How it works
 
 | | |
 |---|---|
-| `src/core/` | plain C++ on OpenGP's libraries, tested in `tests/`: finding OpenGP (`home`), the games' states (`library`), disc images against the known good dumps (`dump_check`), running a game (`game_process`), building a source tree's games (`source_build`), pictures from TPL textures (`art`), cards and backups (`user_data`), the news feed (`news`), the launcher's settings (`prefs`), keys as SDL scancodes (`scancodes`) |
-| `src/qt/` | what QML sees: `Launcher` (games, play, build, add image), `GameSettings`, `Controls`, `UserData`, `News`, and the pictures (`art_maker`) |
+| `src/core/` | plain C++ on OpenGP's libraries, tested in `tests/`: finding OpenGP (`home`), the games' states (`library`), disc images against the known good dumps (`dump_check`), running a game (`game_process`), building a source tree's games (`source_build`), pictures from TPL textures (`art`), cards and backups (`user_data`), the news feed (`news`), updating a package (`update`), the launcher's settings (`prefs`), keys as SDL scancodes (`scancodes`) |
+| `src/qt/` | what QML sees: `Launcher` (games, play, build, add image), `GameSettings`, `Controls`, `UserData`, `News`, `Updater`, and the pictures (`art_maker`) |
 | `src/qml/` | the interface (Qt Quick) |
 
 Things it takes care of:
@@ -128,8 +129,16 @@ Besides what is above:
   [triforce-header-patcher](https://github.com/FIX94/triforce-header-patcher)), in the background,
   on the Play tab (`dump_check`).
 - Drag and drop: drop an `.iso` or `.gcm` on the window to add it, as **Add disc image** does.
-- Update notices: in an installed package, Home says when a newer OpenGP is out, from its latest
-  release on GitHub, with a button to its release page. Turning the news off turns this off too.
+- Updates: in an installed package, a notice at the top of every page says when a new release is
+  out (a newer launcher or a newer OpenGP), from the launcher's latest release on GitHub, whose
+  files are OpenGP's packages. **Update** downloads this computer's package, checks it against the
+  SHA-256 GitHub gives for it, unpacks it with the system's `tar`, runs its launcher once
+  (`--version`) to make sure it starts, then moves its files into place, the old ones aside (the
+  running launcher's own included, which Windows allows for a move), and opens the new launcher.
+  `user/`, `toolchain/`, `build/`, the games and the player's files in `ISO/` stay. A move that
+  fails puts back the ones before it (`update.cpp`). Without a package for this computer, or for a
+  launcher outside its package, the notice's button opens the release page. Turning the news off
+  turns this off too.
 
 ## Licence
 

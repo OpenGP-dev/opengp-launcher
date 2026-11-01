@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.25)
 # Without it a build would not open on a macOS older than the one it was
 # built on. Before project(), so it applies; -D overrides it.
 set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "The oldest macOS the launcher runs on")
-project(OpenGPLauncher VERSION 1.0.0 LANGUAGES C CXX)
+project(OpenGPLauncher VERSION 1.0.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -40,10 +40,11 @@ set(LAUNCHER_DEV_HOME "${OPENGP_SOURCE_DIR}" CACHE PATH "The OpenGP folder a dev
 # The news feed (news.toml, see docs/news.md); empty for none.
 set(LAUNCHER_NEWS_URL "" CACHE STRING "The news feed the launcher shows (a news.toml URL)")
 
-# OpenGP's latest release on GitHub, for the notice on Home that a newer
-# OpenGP is out (in an installed package); empty for none.
-set(LAUNCHER_RELEASES_URL "https://api.github.com/repos/OpenGP-dev/OpenGP/releases/latest" CACHE STRING
-    "OpenGP's latest release (GitHub's API), for the notice that a newer OpenGP is out")
+# The latest release on GitHub, for updates (in an installed package): the
+# launcher's, whose tag is its version and whose files are OpenGP's packages.
+# Empty for none.
+set(LAUNCHER_RELEASES_URL "https://api.github.com/repos/OpenGP-dev/opengp-launcher/releases/latest" CACHE STRING
+    "The latest release (GitHub's API), for updates")
 
 find_package(Qt6 6.8 REQUIRED COMPONENTS Quick QuickControls2 Network)
 qt_standard_project_setup(REQUIRES 6.8)
