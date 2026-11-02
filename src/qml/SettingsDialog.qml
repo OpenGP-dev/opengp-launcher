@@ -325,7 +325,7 @@ Popup {
                     }
                     SettingRow {
                         label: "News"
-                        help: "Show News and Announcements from the OpenGP team, and a notice on Home when a newer OpenGP is out."
+                        help: "Show News and Announcements from the OpenGP team, and offer updates to OpenGP on Home."
                         Toggle { checked: News.enabled; onToggled: News.enabled = checked }
                     }
                     SettingRow {

@@ -6,6 +6,7 @@ import QtQuick.Layouts
 // and how people play it otherwise. Nothing here downloads or adds anything.
 Item {
     id: dx
+    property real noticeSpace  // the update notice's, at the top right (Main.qml)
 
     ScrollView {
         id: scroll
@@ -16,12 +17,15 @@ Item {
         contentWidth: availableWidth
 
         ColumnLayout {
+            id: column
             x: 48
             width: Math.min(scroll.availableWidth - 96, 860)
             spacing: 20
 
             Text {
                 Layout.fillWidth: true
+                // Clear of the update notice, where the page is too narrow for both.
+                Layout.rightMargin: Math.max(0, column.width + 96 + dx.noticeSpace - scroll.availableWidth)
                 text: "Mario Kart Arcade GP DX"
                 color: Theme.chalk
                 font.pixelSize: Theme.display + 6

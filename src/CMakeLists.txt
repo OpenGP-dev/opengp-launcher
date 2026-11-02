@@ -11,6 +11,7 @@ add_library(launcher_core STATIC
   core/scancode_tables.cpp
   core/scancodes.cpp
   core/source_build.cpp
+  core/update.cpp
   core/user_data.cpp
 )
 target_include_directories(launcher_core PUBLIC .)
@@ -50,6 +51,7 @@ qt_add_qml_module(opengp_launcher
     qml/ControlsPage.qml
     qml/ConfirmDialog.qml
     qml/Toast.qml
+    qml/UpdateNotice.qml
     qml/PillButton.qml
     qml/Toggle.qml
     qml/Choice.qml
@@ -69,6 +71,7 @@ qt_add_qml_module(opengp_launcher
     qt/controls.cpp qt/controls.h
     qt/user_data_model.cpp qt/user_data_model.h
     qt/news.cpp qt/news.h
+    qt/updater.cpp qt/updater.h
     qt/art_maker.cpp qt/art_maker.h
 )
 target_include_directories(opengp_launcher PRIVATE . qt)

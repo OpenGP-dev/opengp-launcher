@@ -35,6 +35,7 @@
 #include "qt/game_settings.h"
 #include "qt/launcher.h"
 #include "qt/news.h"
+#include "qt/updater.h"
 #include "qt/user_data_model.h"
 
 #ifdef _WIN32
@@ -179,6 +180,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < launcher.games()->rowCount(); ++i)
       if (launcher.games()->at(i).id == args.value(game_opt)) launcher.setCurrentIndex(i);
   UserData user_data;
+  Updater updater(nullptr);  // before News, which looks for updates with the news
   News news(nullptr);
 
   // --play: once the first look at the games is done.
@@ -271,5 +273,6 @@ int main(int argc, char** argv) {
     launcher.prefs().window_height = window->height();
     launcher.save_prefs();
   }
+  updater.restart_if_updated();
   return code;
 }

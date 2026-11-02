@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The launcher's core: finding OpenGP, its settings, the news feed, pictures
-// from TPL files, the player's files, and following a game that restarts.
+// The launcher's core: finding OpenGP, its settings, the news feed, updates,
+// pictures from TPL files, the player's files, and following a game that
+// restarts.
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest.h>
@@ -25,6 +26,7 @@
 #include "core/prefs.h"
 #include "core/scancodes.h"
 #include "core/source_build.h"
+#include "core/update.h"
 #include "core/user_data.h"
 #include "app/paths.h"
 #include "disc/sha1.h"
@@ -226,6 +228,153 @@ TEST_CASE("a release's version is read from its tag and compared by number") {
   CHECK_FALSE(newer_version("1.0.2-rc1", "1.0.1"));
   CHECK_FALSE(newer_version("1.0.2", "1.0.1-dev"));
   CHECK_FALSE(newer_version("1.0.2", ""));
+}
+
+TEST_CASE("a release is an update when its launcher or its OpenGP is newer, with this computer's package") {
+  const std::string suffix = package_suffix();
+  CHECK(package_version("OpenGP-1.0.2" + suffix) == "1.0.2");
+  CHECK(package_version("OpenGP-1.0.10-windows-x64.zip", "-windows-x64.zip") == "1.0.10");
+  for (const std::string name : {"OpenGP-1.0.2-macos-arm64.tar.gz", "OpenGP-1.0.2-linux-x64.tar.gz",
+                                 "OpenGP-1.0.2-windows-x64.zip", "SHA256SUMS", "OpenGP-v1.0.2-windows-x64.zip",
+                                 "OpenGP-1.0-windows-x64.zip", "OpenGP--windows-x64.zip", "opengp-1.0.2-windows-x64.zip",
+                                 "OpenGP-1.0.2-windows-x64.zip.sig", "OpenGP-1.0.2-rc1-windows-x64.zip"})
+    CHECK_MESSAGE(package_version(name, "-windows-x64.zip") == (name == "OpenGP-1.0.2-windows-x64.zip" ? "1.0.2" : ""),
+                  name);
+
+  CHECK(is_update("1.0.2", "1.0.1", "1.0.1", "1.0.1"));  // the launcher
+  CHECK(is_update("1.0.2", "1.0.2", "1.0.1", "1.0.1"));  // both
+  CHECK(is_update("1.0.2", "1.0.2", "1.0.2", "1.0.1"));  // OpenGP (with a release of the same launcher)
+  CHECK(is_update("1.0.2", "", "1.0.1", "1.0.1"));       // no package for this computer: by the launcher
+  CHECK_FALSE(is_update("1.0.1", "1.0.1", "1.0.1", "1.0.1"));
+  CHECK_FALSE(is_update("1.0.1", "", "1.0.1", "1.0.1"));
+  CHECK_FALSE(is_update("1.0.2", "1.0.0", "1.0.1", "1.0.1"));  // an older OpenGP
+  CHECK_FALSE(is_update("1.0.0", "1.0.2", "1.0.1", "1.0.1"));  // an older launcher
+  CHECK_FALSE(is_update("", "1.0.2", "1.0.1", "1.0.1"));
+  CHECK_FALSE(is_update("1.0.2", "1.0.2", "1.0.1", ""));  // no OpenGP version to compare
+
+  const std::string hex = "5b6755b72f1efb6d2b6b3adcc739e191087715f53ef37d20efbb12708c5f1908";
+  CHECK(sha256_digest("sha256:" + hex) == hex);
+  CHECK(sha256_digest("sha256:5B6755B72F1EFB6D2B6B3ADCC739E191087715F53EF37D20EFBB12708C5F1908") == hex);
+  for (const std::string digest : {std::string(), hex, "sha1:" + hex, "sha256:" + hex.substr(1), "sha256:" + hex + "0",
+                                   "sha256:" + hex.substr(1) + "g", "SHA256:" + hex})
+    CHECK_MESSAGE(sha256_digest(digest).empty(), digest);
+}
+
+TEST_CASE("an update takes the old package's place, and leaves the player's files alone") {
+  TempDir t("launcher_test_update");
+  const fs::path home = t.path / "OpenGP", old = update_dir(home) / "old";
+  const fs::path package = update_dir(home) / "new" / "OpenGP-windows-x64";
+  // The old package, as installed and played.
+  write(home / "OpenGP.exe", "old launcher");
+  write(home / "Qt6Core.dll", "old qt");
+  write(home / "gone.dll", "a library the new package no longer has");
+  write(home / "sdk" / "package.toml", "version = \"1.0.1\"");
+  write(home / "sdk" / "games" / "common" / "removed.cpp", "old source");
+  write(home / "qt" / "plugins" / "platforms" / "qwindows.dll", "old plugin");
+  write(home / "docs" / "playing.md", "old");
+  write(home / "ISO" / "README.txt", "old readme");
+  write(home / "ISO" / "mkgp2.iso", "the player's image");
+  write(home / "user" / "settings.toml", "the player's settings");
+  write(home / "toolchain" / "bin" / "clang++.exe", "compiler");
+  write(home / ("opengp-mkgp2" + std::string(kExe)), "a built game");
+  write(home / "private" / "notes.txt", "the player's own");
+  // The new one.
+  write(package / "OpenGP.exe", "new launcher");
+  write(package / "Qt6Core.dll", "new qt");
+  write(package / "sdk" / "package.toml", "version = \"1.0.2\"");
+  write(package / "sdk" / "games" / "common" / "added.cpp", "new source");
+  write(package / "qt" / "plugins" / "platforms" / "qwindows.dll", "new plugin");
+  write(package / "docs" / "playing.md", "new");
+  write(package / "ISO" / "README.txt", "new readme");
+  write(package / "user" / "settings.toml", "a package must not replace the player's settings");
+  write(package / "licenses" / "Qt-LGPL-3.0.txt", "licence");
+
+  CHECK(find_unpacked_package(update_dir(home) / "new") == package);
+  CHECK(find_unpacked_package(package) == package);
+  CHECK(find_unpacked_package(update_dir(home)).empty());
+
+  std::string error;
+  REQUIRE_MESSAGE(apply_update(home, package, old, &error), error);
+  CHECK(read(home / "OpenGP.exe") == "new launcher");
+  CHECK(read(home / "Qt6Core.dll") == "new qt");
+  CHECK(read(home / "sdk" / "package.toml") == "version = \"1.0.2\"");
+  CHECK(read(home / "sdk" / "games" / "common" / "added.cpp") == "new source");
+  CHECK_FALSE(fs::exists(home / "sdk" / "games" / "common" / "removed.cpp"));  // not in the new package's folders
+  CHECK(read(home / "qt" / "plugins" / "platforms" / "qwindows.dll") == "new plugin");
+  CHECK(read(home / "docs" / "playing.md") == "new");
+  CHECK(read(home / "licenses" / "Qt-LGPL-3.0.txt") == "licence");
+  CHECK(read(home / "ISO" / "README.txt") == "new readme");
+  // Not the package's to replace or take out.
+  CHECK(read(home / "ISO" / "mkgp2.iso") == "the player's image");
+  CHECK(read(home / "user" / "settings.toml") == "the player's settings");
+  CHECK(read(home / "toolchain" / "bin" / "clang++.exe") == "compiler");
+  CHECK(read(home / ("opengp-mkgp2" + std::string(kExe))) == "a built game");
+  CHECK(read(home / "private" / "notes.txt") == "the player's own");
+  CHECK(read(home / "gone.dll") == "a library the new package no longer has");  // at the top: left
+  // What went is kept until the new launcher has started.
+  CHECK(read(old / "OpenGP.exe") == "old launcher");
+  CHECK(read(old / "sdk" / "games" / "common" / "removed.cpp") == "old source");
+  CHECK(read(old / "ISO" / "README.txt") == "old readme");
+  CHECK_FALSE(fs::exists(old / "ISO" / "mkgp2.iso"));
+  CHECK_FALSE(fs::exists(old / "user"));
+
+  // The new launcher, once it has started, takes the old files out.
+  write(update_done_file(home), "1.0.1\n1.0.1\n");
+  clean_update(home);
+  CHECK_FALSE(fs::exists(update_dir(home)));
+  CHECK(read(home / "OpenGP.exe") == "new launcher");
+}
+
+TEST_CASE("a folder and a file that change places in an update") {
+  TempDir t("launcher_test_update_kinds");
+  const fs::path home = t.path / "OpenGP", package = t.path / "new", old = t.path / "old";
+  write(home / "sdk" / "package.toml", "old");
+  write(home / "docs" / "guide", "a file, now a folder");
+  write(home / "docs" / "old" / "page.md", "a folder, now a file");
+  write(package / "sdk" / "package.toml", "new");
+  write(package / "docs" / "guide" / "index.md", "new folder");
+  write(package / "docs" / "old", "new file");
+  std::string error;
+  REQUIRE_MESSAGE(apply_update(home, package, old, &error), error);
+  CHECK(read(home / "docs" / "guide" / "index.md") == "new folder");
+  CHECK(read(home / "docs" / "old") == "new file");
+  CHECK(read(old / "docs" / "guide") == "a file, now a folder");
+  CHECK(read(old / "docs" / "old" / "page.md") == "a folder, now a file");
+}
+
+TEST_CASE("an update that fails half way is undone") {
+  TempDir t("launcher_test_update_undo");
+  const fs::path home = t.path / "OpenGP", package = t.path / "new", old = update_dir(home) / "old";
+  write(home / "OpenGP.exe", "old launcher");
+  write(home / "sdk" / "package.toml", "old");
+  write(home / "sdk" / "stale.txt", "old only");
+  write(package / "OpenGP.exe", "new launcher");
+  write(package / "sdk" / "package.toml", "new");
+  write(package / "sdk" / "games" / "added.cpp", "new");
+  // Every point it could stop at (6 moves: the stale file, then the old and
+  // the new of each but added.cpp) leaves the package as it was.
+  for (int fail_after = 0; fail_after < 6; ++fail_after) {
+    CAPTURE(fail_after);
+    std::string error;
+    CHECK_FALSE(apply_update(home, package, old, &error, fail_after));
+    CHECK(error.find("could not move") != std::string::npos);
+    CHECK(read(home / "OpenGP.exe") == "old launcher");
+    CHECK(read(home / "sdk" / "package.toml") == "old");
+    CHECK(read(home / "sdk" / "stale.txt") == "old only");
+    CHECK_FALSE(fs::exists(home / "sdk" / "games" / "added.cpp"));
+    CHECK(read(package / "OpenGP.exe") == "new launcher");
+    CHECK(read(package / "sdk" / "games" / "added.cpp") == "new");
+  }
+  // Put back, so the old folder has no files left: it can go.
+  clean_update(home);
+  CHECK_FALSE(fs::exists(update_dir(home)));
+
+  // One that could not be put back (no update_done_file): its old files stay.
+  write(old / "OpenGP.exe", "the only copy");
+  write(update_dir(home) / "new" / "x", "new");
+  clean_update(home);
+  CHECK(read(old / "OpenGP.exe") == "the only copy");
+  CHECK_FALSE(fs::exists(update_dir(home) / "new"));
 }
 
 TEST_CASE("TPL textures decode, and screens are joined from their tiles") {
